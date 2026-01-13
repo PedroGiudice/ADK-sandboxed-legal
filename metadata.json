@@ -1,0 +1,5 @@
+{
+  "name": "Legal Theory ADK Sandbox",
+  "description": "A frontend execution shell for Google ADK Agents specialized in Legal Theory context.",
+  "requestFramePermissions": []
+}
