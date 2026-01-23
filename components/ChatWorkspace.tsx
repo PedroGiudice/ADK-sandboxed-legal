@@ -6,17 +6,52 @@ import {
   TerminalIcon, WrenchIcon, CodeIcon, BookOpenIcon, PlayIcon, ChevronDownIcon
 } from './Icons';
 
+type ViewMode = 'developer' | 'client';
+
+/**
+ * Helper to map technical artifacts to Client-facing Legal Intents.
+ * This ensures "Client Mode" speaks the language of the domain, not the machine.
+ */
+const getClientIntent = (part: MessagePart): { icon: React.ReactNode, text: string } | null => {
+  // Thoughts are internal monologue - hide in Client Mode
+  if (part.type === 'thought') return null; 
+
+  // Bash Commands -> Functional Actions
+  if (part.type === 'bash') {
+    if (part.content.includes('ls')) return { icon: <BookOpenIcon className="w-3 h-3"/>, text: "Indexing case file directory..." };
+    if (part.content.includes('grep')) return { icon: <div className="w-3 h-3 font-serif italic font-bold">Q</div>, text: "Scanning documents for key terms..." };
+    if (part.content.includes('curl') || part.content.includes('wget')) return { icon: <GeoSpinner className="w-3 h-3"/>, text: "Retrieving external regulations..." };
+    return { icon: <TerminalIcon className="w-3 h-3"/>, text: "Executing internal system verification..." };
+  }
+  
+  // File Operations -> Document Handling
+  if (part.type === 'file_op') {
+    const file = part.metadata?.filePath?.split('/').pop() || 'document';
+    const isWrite = part.content.includes('write');
+    return { 
+        icon: <PaperclipIcon className="w-3 h-3"/>, 
+        text: isWrite ? `Drafting legal memorandum: ${file}` : `Reviewing evidence file: ${file}` 
+    };
+  }
+  
+  // Tool Calls -> Expert Consultation
+  if (part.type === 'tool_call') {
+    if (part.metadata?.toolName?.includes('search') || part.metadata?.toolName?.includes('lookup')) {
+        return { icon: <div className="w-3 h-3 font-serif">§</div>, text: "Cross-referencing legal precedents..." };
+    }
+    return { icon: <WrenchIcon className="w-3 h-3"/>, text: "Consulting specialized verification module..." };
+  }
+  
+  return null;
+};
+
 /** 
  * AgentMessageBody Component
- * Renders dynamic parts of an agent message including bash blocks, thoughts, and tool calls.
- * 
- * Styles:
- * - Bash: Dark terminal style (Emerald accents)
- * - Tool Call: Amber/Warm style
- * - File Op: Indigo/Slate style
- * - Thought: Minimalist collapsing trace
+ * Renders based on ViewMode:
+ * - Developer: Raw terminals, JSON tools, stack traces.
+ * - Client: Polished "Intents" and natural language text.
  */
-const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string }> = ({ parts, content }) => {
+const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewMode: ViewMode }> = ({ parts, content, viewMode }) => {
   if (!parts || parts.length === 0) {
     return <div className="whitespace-pre-wrap font-sans font-light text-stone-300 leading-relaxed">{content}</div>;
   }
@@ -24,6 +59,34 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string }> = (
   return (
     <div className="space-y-3 w-full">
       {parts.map((part, idx) => {
+        
+        // --- CLIENT MODE RENDERING ---
+        if (viewMode === 'client') {
+            const intent = getClientIntent(part);
+            
+            // If text, render normally. If mapped intent exists, render the "Status Pill".
+            if (part.type === 'text') {
+                return (
+                    <div key={idx} className="whitespace-pre-wrap font-serif text-stone-300 leading-7 my-2 text-sm">
+                        {part.content}
+                    </div>
+                );
+            }
+            
+            if (intent) {
+                return (
+                    <div key={idx} className="flex items-center gap-3 py-2 px-3 my-1 rounded-md bg-stone-800/20 border border-stone-800/40">
+                        <div className="text-amber-600/70">{intent.icon}</div>
+                        <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">{intent.text}</span>
+                        {/* Simulation of progress/success tick */}
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500/50"></div>
+                    </div>
+                );
+            }
+            return null; // Hide unmatched parts (like raw thoughts) in Client Mode
+        }
+
+        // --- DEVELOPER MODE RENDERING (Existing logic) ---
         switch (part.type) {
           case 'text':
             return (
@@ -142,6 +205,8 @@ interface ChatWorkspaceProps {
 }
 
 const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, onSendMessage, isLoading = false }) => {
+  const [viewMode, setViewMode] = useState<ViewMode>('developer');
+  
   const [inputValue, setInputValue] = useState('');
   const [outputStyle, setOutputStyle] = useState<OutputStyle>('normal');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -158,7 +223,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading, isUploading]);
+  }, [messages, isLoading, isUploading, viewMode]);
 
   const handleSend = () => {
     if ((!inputValue.trim() && attachments.length === 0) || isLoading || isUploading) return;
@@ -228,15 +293,42 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
   return (
     <div className="flex-1 flex flex-col bg-stone-900 relative">
       
-      {/* Top Bar */}
+      {/* Top Bar with Mode Toggle */}
       <div className="h-16 flex items-center justify-between px-8 border-b border-stone-800 bg-stone-900/95 backdrop-blur-sm z-10">
-         <div>
-            <h1 className="text-stone-200 font-medium tracking-wide text-sm">{activeAgent.name}</h1>
+         <div className="flex flex-col">
+            <h1 className="text-stone-200 font-medium tracking-wide text-sm flex items-center gap-2">
+                {activeAgent.name}
+            </h1>
             <div className="flex items-center gap-2 mt-0.5">
                 <span className={`w-1 h-1 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span>
                 <p className="text-[9px] text-stone-600 font-mono uppercase tracking-tighter">Session ID: 0x82A1</p>
             </div>
          </div>
+
+         {/* Center: Mode Toggle */}
+         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-stone-950/50 p-1 rounded-full border border-stone-800">
+             <button
+                onClick={() => setViewMode('developer')}
+                className={`px-3 py-1 text-[9px] uppercase font-bold tracking-wider rounded-full transition-all ${
+                    viewMode === 'developer' 
+                    ? 'bg-stone-800 text-stone-200 shadow-sm' 
+                    : 'text-stone-600 hover:text-stone-400'
+                }`}
+             >
+                Dev_Mode
+             </button>
+             <button
+                onClick={() => setViewMode('client')}
+                className={`px-3 py-1 text-[9px] uppercase font-bold tracking-wider rounded-full transition-all ${
+                    viewMode === 'client' 
+                    ? 'bg-amber-900/20 text-amber-500 shadow-sm' 
+                    : 'text-stone-600 hover:text-stone-400'
+                }`}
+             >
+                Client_View
+             </button>
+         </div>
+
          <div className="flex items-center gap-4">
             <GeoSpinner className="w-5 h-5" />
             {isLoading && (
@@ -275,14 +367,14 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                             <span className={`text-[9px] font-bold uppercase tracking-[0.15em] ${
                                 isUser ? 'text-amber-700/80' : 'text-stone-600'
                             }`}>
-                                {isUser ? 'CORE_USER' : 'ADK_OUTPUT'}
+                                {isUser ? 'CLIENT_INPUT' : (viewMode === 'client' ? 'LEGAL_COUNSEL' : 'ADK_OUTPUT')}
                             </span>
                             <span className="text-[9px] text-stone-700 font-mono">
                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </span>
                         </div>
 
-                        {/* Content Bubble Refined */}
+                        {/* Content Bubble */}
                         <div className={`
                             relative p-5 text-[13px] leading-relaxed transition-all duration-300
                             ${isUser 
@@ -291,9 +383,9 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                             }
                         `}>
                             {isUser ? (
-                              <div className="whitespace-pre-wrap">{msg.content}</div>
+                              <div className="whitespace-pre-wrap font-serif text-stone-300">{msg.content}</div>
                             ) : (
-                              <AgentMessageBody parts={msg.parts} content={msg.content} />
+                              <AgentMessageBody parts={msg.parts} content={msg.content} viewMode={viewMode} />
                             )}
 
                             {/* Attachments within message */}
@@ -345,7 +437,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
       <div className="bg-stone-900 p-6 border-t border-stone-800/60">
         <div className="max-w-4xl mx-auto space-y-4">
             
-            {/* Attachment Bar Refined */}
+            {/* Attachment Bar */}
             {(attachments.length > 0 || isUploading) && (
               <div className="flex flex-col gap-2 p-3 bg-stone-950/20 border border-stone-800/60 rounded-sm animate-in slide-in-from-bottom-1">
                 <div className="flex items-center justify-between">
@@ -388,7 +480,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
               </div>
             )}
 
-            {/* Input Component Refined */}
+            {/* Input Component */}
             <div className={`
                 relative bg-stone-800/20 border transition-all duration-300 rounded-sm
                 ${isLoading ? 'border-stone-800/20' : 'border-stone-800/80 focus-within:border-stone-600 focus-within:bg-stone-800/30'}
@@ -398,7 +490,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isLoading}
-                    placeholder={isLoading ? "SYSTEM_BUSY" : "ENTER_QUERY_"}
+                    placeholder={isLoading ? "System is analyzing..." : "Enter legal inquiry..."}
                     className="w-full p-4 bg-transparent text-stone-300 placeholder-stone-700 focus:outline-none resize-none min-h-[50px] max-h-[180px] text-[13px] font-mono leading-relaxed disabled:cursor-not-allowed"
                     rows={1}
                 />
@@ -418,7 +510,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                 </div>
             </div>
 
-            {/* Toolbar Refined (Slim Buttons) */}
+            {/* Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
               
               <div className="flex items-center gap-2">
@@ -433,7 +525,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                 </button>
               </div>
 
-              {/* Style Selection - Slim Toggles */}
+              {/* Style Selection */}
               <div className="flex items-center bg-black/20 rounded-sm border border-stone-800 p-0.5">
                  {(['concise', 'normal', 'verbose'] as OutputStyle[]).map((style) => (
                     <button
