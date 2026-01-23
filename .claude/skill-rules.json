@@ -1,0 +1,1145 @@
+{
+  "description": "Auto-activation rules for 35 installed skills - Legal automation context",
+  "version": "1.0.0",
+  "context": {
+    "project": "lex-vector",
+    "domain": "Legal automation (Brazilian law - OAB, DJEN, RAG)",
+    "stack": "Python 3.14, Windows corporate, 3-layer architecture",
+    "rules": [
+      "RULE_006: venv mandatory",
+      "LESSON_004: no hardcoded paths"
+    ]
+  },
+  "skills": {
+    "architecture-diagram-creator": {
+      "type": "documentation",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Architecture Diagram Creator",
+      "promptTriggers": {
+        "keywords": [
+          "architecture diagram",
+          "system diagram",
+          "flowchart",
+          "mermaid diagram"
+        ],
+        "intentPatterns": [
+          "(create|draw|generate).*?(diagram|flowchart)",
+          "(architecture|system).*?(diagram|visualization)"
+        ]
+      }
+    },
+    "article-extractor": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "Article Extractor",
+      "promptTriggers": {
+        "keywords": [
+          "extract article",
+          "legal article",
+          "article extraction"
+        ],
+        "intentPatterns": [
+          "(extract|find|get).*?(article)",
+          "article.*?(extraction)"
+        ]
+      }
+    },
+    "artifacts-builder": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Artifacts Builder",
+      "promptTriggers": {
+        "keywords": [
+          "artifact",
+          "build artifact",
+          "create artifact"
+        ],
+        "intentPatterns": [
+          "(build|create|generate).*?(artifact)",
+          "artifact.*?(building|creation)"
+        ]
+      }
+    },
+    "brainstorming": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Brainstorming Ideas Into Designs - Use before implementation to refine ideas through collaborative questioning",
+      "promptTriggers": {
+        "keywords": [
+          "brainstorm",
+          "ideation",
+          "exploring options",
+          "idea refinement",
+          "plan mode",
+          "planning mode",
+          "design feature",
+          "think through",
+          "explore approaches"
+        ],
+        "intentPatterns": [
+          "(brainstorm|explore).*?(idea|option|approach)",
+          "help.*?(refine|develop).*?(idea)",
+          "(plan|design).*?(feature|implementation)",
+          "(think|explore).*?(through|options)",
+          "before.*?(implement|build|code)"
+        ]
+      }
+    },
+    "cli-design": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "CLI Design - Professional Terminal Interfaces",
+      "promptTriggers": {
+        "keywords": [
+          "cli",
+          "command line",
+          "terminal interface",
+          "cli tool"
+        ],
+        "intentPatterns": [
+          "(create|build|design).*?(cli|command.line)",
+          "terminal.*?(tool|interface)"
+        ]
+      }
+    },
+    "code-auditor": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Code Auditor",
+      "promptTriggers": {
+        "keywords": [
+          "audit",
+          "security review",
+          "code review",
+          "vulnerability",
+          "owasp"
+        ],
+        "intentPatterns": [
+          "(audit|review).*?(security|vulnerabilit)",
+          "(check|scan).*(security|vulnerabilit)"
+        ]
+      }
+    },
+    "code-execution": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "low",
+      "description": "Code Execution",
+      "promptTriggers": {
+        "keywords": [
+          "execute code",
+          "run code",
+          "code execution"
+        ],
+        "intentPatterns": [
+          "(execute|run).*?(code|script)",
+          "code.*?(execution)"
+        ]
+      }
+    },
+    "code-refactor": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Code Refactor",
+      "promptTriggers": {
+        "keywords": [
+          "refactor",
+          "refactoring",
+          "code cleanup",
+          "improve code structure",
+          "refatorar",
+          "reorganizar",
+          "limpar código",
+          "melhorar código",
+          "reestruturar",
+          "organizar melhor"
+        ],
+        "intentPatterns": [
+          "(refactor|restructure|reorganize|refator|reorganiz).*?(code|código)",
+          "(improve|melhor).*?(code|código).*?(structure|organization|estrutura)",
+          "(limp|organiz).*?(código|code|pasta|arquivo)"
+        ]
+      }
+    },
+    "code-transfer": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Code Transfer",
+      "promptTriggers": {
+        "keywords": [
+          "transfer code",
+          "copy code",
+          "move code",
+          "migrate code"
+        ],
+        "intentPatterns": [
+          "(transfer|copy|move|migrate).*?(code|file)",
+          "code.*?(transfer|migration)"
+        ]
+      }
+    },
+    "codebase-documenter": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Codebase Documenter",
+      "promptTriggers": {
+        "keywords": [
+          "document codebase",
+          "write documentation",
+          "api docs"
+        ],
+        "intentPatterns": [
+          "(document|create.docs).*?(codebase|api|code)",
+          "write.*?(documentation)"
+        ]
+      }
+    },
+    "condition-based-waiting": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Condition-Based Waiting",
+      "promptTriggers": {
+        "keywords": [
+          "wait for",
+          "polling",
+          "condition waiting",
+          "wait until"
+        ],
+        "intentPatterns": [
+          "wait.*(for|until)",
+          "(poll|check).*?(condition)"
+        ]
+      }
+    },
+    "conversation-analyzer": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Conversation Analyzer",
+      "promptTriggers": {
+        "keywords": [
+          "analyze conversation",
+          "conversation analysis",
+          "transcript analysis"
+        ],
+        "intentPatterns": [
+          "(analyze|review).*?(conversation|transcript)",
+          "conversation.*?(analysis)"
+        ]
+      }
+    },
+    "dashboard-creator": {
+      "type": "utility",
+      "enforcement": "suggest",
+      "priority": "low",
+      "description": "Dashboard Creator",
+      "promptTriggers": {
+        "keywords": [
+          "dashboard",
+          "create dashboard",
+          "data visualization"
+        ],
+        "intentPatterns": [
+          "(create|build).*?(dashboard)",
+          "dashboard.*(create|build)"
+        ]
+      }
+    },
+    "defense-in-depth": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Defense-in-Depth Validation",
+      "promptTriggers": {
+        "keywords": [
+          "defense in depth",
+          "security layers",
+          "layered security"
+        ],
+        "intentPatterns": [
+          "defense.*?depth",
+          "(layered|multiple).*?(security)"
+        ]
+      }
+    },
+    "dispatching-parallel-agents": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Dispatching Parallel Agents",
+      "promptTriggers": {
+        "keywords": [
+          "parallel agents",
+          "multiple agents",
+          "concurrent agents"
+        ],
+        "intentPatterns": [
+          "(spawn|run).*?(parallel|multiple|concurrent).*?(agent)",
+          "agents.*?(parallel|concurrent)"
+        ]
+      }
+    },
+    "docx": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "DOCX creation, editing, and analysis",
+      "promptTriggers": {
+        "keywords": [
+          "docx",
+          "word document",
+          "word file"
+        ],
+        "intentPatterns": [
+          "docx",
+          "(read|create|generate).*?(word|docx)"
+        ]
+      }
+    },
+    "executing-plans": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Executing Plans",
+      "promptTriggers": {
+        "keywords": [
+          "execute plan",
+          "implement plan",
+          "follow plan",
+          "executar plano",
+          "implementar plano",
+          "seguir plano",
+          "conforme plano",
+          "baseado no plano",
+          "prossiga",
+          "continue"
+        ],
+        "intentPatterns": [
+          "(execute|implement|follow|execut|implement|segu).*?(plan|plano)",
+          "(based|baseado|conforme).*?(plan|plano)",
+          "(prossig|continu).*?(task|tarefa|plano)"
+        ]
+      }
+    },
+    "feature-planning": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Feature Planning",
+      "promptTriggers": {
+        "keywords": [
+          "plan feature",
+          "feature design",
+          "implementation plan",
+          "architecture plan",
+          "planejar",
+          "planejamento",
+          "arquitetura",
+          "como implementar",
+          "preciso implementar",
+          "vamos criar",
+          "nova feature",
+          "nova funcionalidade"
+        ],
+        "intentPatterns": [
+          "(plan|design|planejar).*?(feature|implementation|funcionalidade)",
+          "(how|como).*?(implement|build|criar|fazer)",
+          "(preciso|quero|vamos).*?(criar|implementar|fazer)"
+        ]
+      }
+    },
+    "file-operations": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "low",
+      "description": "File Operations",
+      "promptTriggers": {
+        "keywords": [
+          "file operations",
+          "file manipulation",
+          "read file",
+          "write file"
+        ],
+        "intentPatterns": [
+          "(read|write|create|delete|move).*?(file)",
+          "file.*?(operation|manipulation)"
+        ]
+      }
+    },
+    "finishing-a-development-branch": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Finishing a Development Branch",
+      "promptTriggers": {
+        "keywords": [
+          "finish branch",
+          "complete branch",
+          "merge branch",
+          "close branch"
+        ],
+        "intentPatterns": [
+          "(finish|complete|close).*?(branch)",
+          "(merge|integrate).*?(branch)"
+        ]
+      }
+    },
+    "flowchart-creator": {
+      "type": "documentation",
+      "enforcement": "suggest",
+      "priority": "low",
+      "description": "Flowchart Creator",
+      "promptTriggers": {
+        "keywords": [
+          "flowchart",
+          "flow diagram",
+          "process diagram"
+        ],
+        "intentPatterns": [
+          "(create|draw).*?(flowchart)",
+          "visualize.*?(flow|process)"
+        ]
+      }
+    },
+    "frontend-design": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic \"",
+      "promptTriggers": {
+        "keywords": [
+          "frontend design",
+          "ui design",
+          "design system",
+          "component design"
+        ],
+        "intentPatterns": [
+          "(design|create).*?(ui|interface|component)",
+          "frontend.*?(design|styling)"
+        ]
+      }
+    },
+    "gemini-cli": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Gemini CLI integration for context offloading - correct syntax, flags, and patterns",
+      "promptTriggers": {
+        "keywords": [
+          "gemini",
+          "context offloading",
+          "large files",
+          "summarize",
+          "second opinion",
+          "gemini-assistant",
+          "gemini CLI"
+        ],
+        "intentPatterns": [
+          "(use|call|run).*?gemini",
+          "(delegate|offload).*?(analysis|context)",
+          "(large|big).*?(file|context).*?(gemini|analyze)"
+        ]
+      }
+    },
+    "deep-research": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Gemini ADK Deep Research Agent for autonomous technical research with web search",
+      "promptTriggers": {
+        "keywords": [
+          "deep research",
+          "research",
+          "pesquisa",
+          "pesquisar",
+          "investigate",
+          "investigar",
+          "adk agent",
+          "web search",
+          "technical analysis",
+          "analise tecnica"
+        ],
+        "intentPatterns": [
+          "(deep|run).*?(research|pesquisa)",
+          "(research|pesquis).*?(topic|topico|sobre)",
+          "(investigate|investigar).*?(topic|subject)",
+          "(find|buscar|procurar).*?(information|informacao)",
+          "(analyze|analise).*?(technology|tecnologia|topic)"
+        ]
+      }
+    },
+    "git-pushing": {
+      "type": "utility",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Git Push Workflow",
+      "promptTriggers": {
+        "keywords": [
+          "git push",
+          "push commit",
+          "push changes",
+          "commit",
+          "faz commit",
+          "fazer commit",
+          "commita",
+          "git add",
+          "faça push",
+          "faz push"
+        ],
+        "intentPatterns": [
+          "git.*?(push|commit|add)",
+          "(push|commit).*?(change|alterac|mudanc)",
+          "(faz|faca|fazer).*?(commit|push)",
+          "commit.*?(push|tudo|all)"
+        ]
+      }
+    },
+    "pdf": {
+      "type": "utility",
+      "enforcement": "suggest",
+      "priority": "low",
+      "description": "PDF Processing Guide",
+      "promptTriggers": {
+        "keywords": [
+          "pdf",
+          "pdf file",
+          "pdf document"
+        ],
+        "intentPatterns": [
+          "pdf",
+          "(read|create|generate).*?(pdf)"
+        ]
+      }
+    },
+    "pptx": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "PPTX creation, editing, and analysis",
+      "promptTriggers": {
+        "keywords": [
+          "pptx",
+          "powerpoint",
+          "presentation"
+        ],
+        "intentPatterns": [
+          "pptx|powerpoint",
+          "(read|create|generate).*?(presentation|powerpoint)"
+        ]
+      }
+    },
+    "project-bootstrapper": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Project Bootstrapper",
+      "promptTriggers": {
+        "keywords": [
+          "bootstrap project",
+          "new project",
+          "project setup",
+          "scaffold project"
+        ],
+        "intentPatterns": [
+          "(bootstrap|setup|scaffold|init).*?(project)",
+          "new.*?(project).*?(setup)"
+        ]
+      }
+    },
+    "prompt-improver": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Prompt Improver Skill",
+      "promptTriggers": {
+        "keywords": [
+          "improve prompt",
+          "refine prompt",
+          "prompt quality"
+        ],
+        "intentPatterns": [
+          "(improve|refine|enhance).*?(prompt)",
+          "prompt.*?(quality|improvement)"
+        ]
+      }
+    },
+    "receiving-code-review": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Code Review Reception",
+      "promptTriggers": {
+        "keywords": [
+          "respond to review",
+          "address feedback",
+          "review feedback"
+        ],
+        "intentPatterns": [
+          "(respond|address).*?(review|feedback)",
+          "received.*?(review|feedback)"
+        ]
+      }
+    },
+    "requesting-code-review": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Requesting Code Review",
+      "promptTriggers": {
+        "keywords": [
+          "request review",
+          "code review request",
+          "pull request"
+        ],
+        "intentPatterns": [
+          "(request|ask.for).*?(review)",
+          "(create|open).*?(pull.request|pr)"
+        ]
+      }
+    },
+    "review-implementing": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Review Feedback Implementation",
+      "promptTriggers": {
+        "keywords": [
+          "implement review feedback",
+          "apply feedback",
+          "fix review comments"
+        ],
+        "intentPatterns": [
+          "(implement|apply|fix).*?(feedback|comment|review)",
+          "address.*?(review).*?(comment)"
+        ]
+      }
+    },
+    "root-cause-tracing": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Root Cause Tracing",
+      "promptTriggers": {
+        "keywords": [
+          "root cause",
+          "trace error",
+          "error source",
+          "investigate origin"
+        ],
+        "intentPatterns": [
+          "(find|trace|identify).*?(root.cause)",
+          "why.*?(error|bug|issue).*?(happen|occur)"
+        ]
+      }
+    },
+    "sharing-skills": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Sharing Skills",
+      "promptTriggers": {
+        "keywords": [
+          "share skill",
+          "publish skill",
+          "distribute skill"
+        ],
+        "intentPatterns": [
+          "(share|publish|distribute).*?(skill)",
+          "make.*?(skill).*?(available)"
+        ]
+      }
+    },
+    "ship-learn-next": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Ship-Learn-Next Action Planner",
+      "promptTriggers": {
+        "keywords": [
+          "ship feature",
+          "release",
+          "deploy",
+          "ship to production"
+        ],
+        "intentPatterns": [
+          "(ship|release|deploy).*?(feature|code)",
+          "ready.*?(ship|release)"
+        ]
+      }
+    },
+    "skill-creator": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Skill Creator",
+      "promptTriggers": {
+        "keywords": [
+          "create skill",
+          "new skill",
+          "skill development"
+        ],
+        "intentPatterns": [
+          "(create|develop|build).*?(skill)",
+          "new.*?(skill)"
+        ]
+      }
+    },
+    "subagent-driven-development": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Subagent-Driven Development",
+      "promptTriggers": {
+        "keywords": [
+          "subagent",
+          "spawn agent",
+          "delegate to agent",
+          "task delegation"
+        ],
+        "intentPatterns": [
+          "(spawn|create|use).*?(subagent|agent)",
+          "(delegate).*?(task|work)"
+        ]
+      }
+    },
+    "systematic-debugging": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Systematic Debugging",
+      "promptTriggers": {
+        "keywords": [
+          "debug",
+          "debugging",
+          "troubleshoot",
+          "diagnose",
+          "fix bug",
+          "error investigation",
+          "erro",
+          "bug",
+          "não funciona",
+          "quebrou",
+          "falhou",
+          "deu erro",
+          "corrigir",
+          "resolver"
+        ],
+        "intentPatterns": [
+          "(debug|troubleshoot|diagnose).*?(error|bug|issue)",
+          "(fix|resolve|corrig|resolv).*?(bug|error|erro)",
+          "(nao|não).*?(funciona|roda|executa)",
+          "(deu|teve|tem).*?(erro|bug|problema)"
+        ]
+      }
+    },
+    "technical-doc-creator": {
+      "type": "documentation",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Technical Documentation Creator",
+      "promptTriggers": {
+        "keywords": [
+          "technical documentation",
+          "technical spec",
+          "technical guide"
+        ],
+        "intentPatterns": [
+          "(create|write).*?(technical).*?(doc|spec|guide)",
+          "technical.*?(documentation)"
+        ]
+      }
+    },
+    "test-driven-development": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Test-Driven Development (TDD)",
+      "promptTriggers": {
+        "keywords": [
+          "tdd",
+          "test driven",
+          "test first",
+          "red green refactor",
+          "failing test"
+        ],
+        "intentPatterns": [
+          "(write|create).*?(test).*?(first|before)",
+          "(tdd|test.driven)",
+          "(red|green|refactor).*?(cycle)"
+        ]
+      }
+    },
+    "test-fixing": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Test Fixing",
+      "promptTriggers": {
+        "keywords": [
+          "failing test",
+          "broken test",
+          "test failure",
+          "fix test",
+          "teste falhou",
+          "teste quebrou",
+          "corrigir teste",
+          "arrumar teste",
+          "pytest",
+          "test error"
+        ],
+        "intentPatterns": [
+          "(fix|repair|corrig|arruma).*?(test|spec|teste)",
+          "test.*?(fail|break|error|falh|quebr)",
+          "(pytest|jest|mocha).*?(fail|error)"
+        ]
+      }
+    },
+    "testing-anti-patterns": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Testing Anti-Patterns",
+      "promptTriggers": {
+        "keywords": [
+          "test smell",
+          "testing anti-pattern",
+          "bad test",
+          "test quality"
+        ],
+        "intentPatterns": [
+          "(avoid|prevent).*?(test).*?(anti.pattern)",
+          "improve.*?(test).*?(quality)"
+        ]
+      }
+    },
+    "testing-skills-with-subagents": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Testing Skills With Subagents",
+      "promptTriggers": {
+        "keywords": [
+          "test skill",
+          "skill testing",
+          "validate skill"
+        ],
+        "intentPatterns": [
+          "(test|validate|verify).*?(skill)",
+          "skill.*?(test|testing)"
+        ]
+      }
+    },
+    "timeline-creator": {
+      "type": "utility",
+      "enforcement": "suggest",
+      "priority": "low",
+      "description": "Timeline Creator",
+      "promptTriggers": {
+        "keywords": [
+          "timeline",
+          "create timeline",
+          "chronology"
+        ],
+        "intentPatterns": [
+          "(create|generate).*?(timeline)",
+          "timeline.*?(visualization)"
+        ]
+      }
+    },
+    "using-git-worktrees": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Using Git Worktrees",
+      "promptTriggers": {
+        "keywords": [
+          "git worktree",
+          "worktree",
+          "multiple branches"
+        ],
+        "intentPatterns": [
+          "git.*?worktree",
+          "work.*?(multiple).*?(branch)"
+        ]
+      }
+    },
+    "using-superpowers": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "<EXTREMELY-IMPORTANT>",
+      "promptTriggers": {
+        "keywords": [
+          "superpowers",
+          "obra superpowers",
+          "use superpowers"
+        ],
+        "intentPatterns": [
+          "superpowers",
+          "use.*?(superpowers)"
+        ]
+      }
+    },
+    "verification-before-completion": {
+      "type": "utility",
+      "enforcement": "suggest",
+      "priority": "low",
+      "description": "Verification Before Completion",
+      "promptTriggers": {
+        "keywords": [
+          "verify",
+          "validation",
+          "checklist",
+          "double check",
+          "confirm"
+        ],
+        "intentPatterns": [
+          "(verify|validate|check).*?(before|completion)",
+          "make sure.*?(correct|working)"
+        ]
+      }
+    },
+    "webapp-testing": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Web Application Testing",
+      "promptTriggers": {
+        "keywords": [
+          "test webapp",
+          "web testing",
+          "browser testing",
+          "e2e testing"
+        ],
+        "intentPatterns": [
+          "(test|verify).*?(webapp|website|web.app)",
+          "(e2e|integration).*?(test)"
+        ]
+      }
+    },
+    "writing-plans": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Writing Plans - Creates detailed implementation plans for engineers with exact file paths and bite-sized tasks",
+      "promptTriggers": {
+        "keywords": [
+          "write plan",
+          "create plan",
+          "planning document",
+          "implementation plan",
+          "plan mode",
+          "planning mode",
+          "step by step",
+          "task breakdown",
+          "detailed plan"
+        ],
+        "intentPatterns": [
+          "(write|create|draft).*?(plan)",
+          "plan.*?(document|specification)",
+          "(plan|break.down).*?(implementation|task)",
+          "(step|task).*?(by|breakdown)",
+          "detailed.*?(plan|steps)"
+        ]
+      }
+    },
+    "writing-skills": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Writing Skills",
+      "promptTriggers": {
+        "keywords": [
+          "write skill",
+          "skill writing",
+          "skill content"
+        ],
+        "intentPatterns": [
+          "(write|author).*?(skill)",
+          "skill.*?(content|writing)"
+        ]
+      }
+    },
+    "xlsx": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Requirements for Outputs",
+      "promptTriggers": {
+        "keywords": [
+          "xlsx",
+          "excel",
+          "spreadsheet"
+        ],
+        "intentPatterns": [
+          "xlsx|excel|spreadsheet",
+          "(read|create|generate).*?(excel|spreadsheet)"
+        ]
+      }
+    },
+    "youtube-transcript": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "low",
+      "description": "YouTube Transcript Downloader",
+      "promptTriggers": {
+        "keywords": [
+          "youtube transcript",
+          "video transcript",
+          "youtube caption"
+        ],
+        "intentPatterns": [
+          "youtube.*?(transcript|caption)",
+          "(get|fetch|extract).*?(youtube).*?(transcript)"
+        ]
+      }
+    },
+    "backend-dev-guidelines": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Backend Development Guidelines",
+      "promptTriggers": {
+        "keywords": [
+          "backend",
+          "express",
+          "api",
+          "controller",
+          "service",
+          "repository",
+          "microservice"
+        ],
+        "intentPatterns": [
+          "(create|build|implement).*?(api|endpoint|route|controller)",
+          "(backend|server.side).*?(development|code)"
+        ]
+      }
+    },
+    "error-tracking": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "your project Sentry Integration Skill",
+      "promptTriggers": {
+        "keywords": [
+          "sentry",
+          "error tracking",
+          "performance monitoring",
+          "error capture"
+        ],
+        "intentPatterns": [
+          "(add|implement).*?(sentry|error.tracking)",
+          "(track|monitor|capture).*?(error|exception)"
+        ]
+      }
+    },
+    "frontend-dev-guidelines": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Frontend Development Guidelines",
+      "promptTriggers": {
+        "keywords": [
+          "frontend",
+          "react",
+          "component",
+          "tsx",
+          "jsx",
+          "ui",
+          "tanstack router"
+        ],
+        "intentPatterns": [
+          "(create|build).*?(component|ui|interface)",
+          "(frontend|client.side).*?(development|code)"
+        ]
+      }
+    },
+    "route-tester": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "your project Route Tester Skill",
+      "promptTriggers": {
+        "keywords": [
+          "route tester",
+          "test",
+          "debug",
+          "api",
+          "route",
+          "debugging"
+        ],
+        "intentPatterns": [
+          "(implement).*?(route tester)",
+          "(create).*?(route tester)",
+          "(build).*?(route tester)",
+          "(implement).*?(test)",
+          "(create).*?(test)"
+        ]
+      }
+    },
+    "skill-developer": {
+      "type": "quality",
+      "enforcement": "suggest",
+      "priority": "critical",
+      "description": "Skill Developer Guide",
+      "promptTriggers": {
+        "keywords": [
+          "skill developer",
+          "implement",
+          "create",
+          "debug",
+          "track",
+          "manage",
+          "hook"
+        ],
+        "intentPatterns": [
+          "(implement).*?(skill developer)",
+          "(create).*?(skill developer)",
+          "(build).*?(skill developer)",
+          "(implement).*?(implement)",
+          "(create).*?(implement)"
+        ]
+      }
+    },
+    "visual-dev-workflow": {
+      "type": "development",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Visual Dev Workflow - Dev server + subagente + verificacao visual via Chrome MCP",
+      "promptTriggers": {
+        "keywords": [
+          "visual dev",
+          "dev com preview",
+          "ver enquanto desenvolve",
+          "subagente visual",
+          "frontend preview",
+          "max out",
+          "melhorar visual",
+          "aprimorar ui"
+        ],
+        "intentPatterns": [
+          "(dev|desenvolv).*?(visual|preview|ver)",
+          "(subagent|delega).*?(front|visual|ui)",
+          "(max|melhor|aprimo).*?(visual|ui|estetica)",
+          "(ver|monitorar).*?(enquanto|durante).*?(trabalh|desenvolv)"
+        ]
+      }
+    }
+  },
+  "_metadata": {
+    "lastSync": "2025-11-23T07:23:52.793Z",
+    "totalSkills": 55,
+    "autoGenerated": 55,
+    "manualConfigured": 0
+  }
+}
