@@ -34,4 +34,5 @@ export const DEFAULT_CONFIG: RuntimeConfig = {
   topK: 40,
   enableGrounding: true,
   securityFilterLevel: 'high',
+  outputStyle: 'normal',
 };
