@@ -97,8 +97,11 @@ const App: React.FC = () => {
           setUpdateStatus('downloading');
           await update.downloadAndInstall((event) => {
             if (event.event === 'Progress') {
-              const progress = (event.data.chunkLength / event.data.contentLength) * 100;
-              setUpdateProgress(progress);
+              const data = event.data as { chunkLength: number; contentLength?: number };
+              if (data.contentLength && data.contentLength > 0) {
+                const progress = (data.chunkLength / data.contentLength) * 100;
+                setUpdateProgress(progress);
+              }
             }
           });
           setUpdateStatus('ready');

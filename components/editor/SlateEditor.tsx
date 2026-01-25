@@ -32,7 +32,7 @@ const Element = ({ attributes, children, element }: RenderElementProps) => {
 
   switch (customElement.type) {
     case 'heading':
-      const HeadingTag = `h${customElement.level}` as keyof JSX.IntrinsicElements;
+      const HeadingTag = `h${customElement.level}` as 'h1' | 'h2' | 'h3';
       const headingClasses = {
         1: 'text-xl font-bold mb-2',
         2: 'text-lg font-semibold mb-1.5',
