@@ -37,8 +37,8 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({ selectedAgentId, onSelect
   return (
     <div
       className={`
-        flex flex-col h-full bg-surface border-r border-border transition-all duration-300 ease-in-out z-20
-        ${isCollapsed ? 'w-16' : 'w-72'}
+        flex flex-col h-full w-full bg-surface border-r border-border transition-all duration-300 ease-in-out z-20
+        ${isCollapsed ? '!w-16' : ''}
       `}
     >
       {/* Header */}

@@ -7,68 +7,9 @@ import {
   TerminalIcon, WrenchIcon, CodeIcon, BookOpenIcon, PlayIcon, ChevronDownIcon, SettingsIcon
 } from './Icons';
 import { SlateEditor, serializeToMarkdown, isEditorEmpty, initialValue } from './editor';
+import { renderMarkdown } from './MarkdownRenderer';
+import ResizeHandle, { useResizable } from './ResizeHandle';
 
-/**
- * Simple markdown renderer for basic formatting
- * Supports: **bold**, *italic*, `code`, and line breaks
- */
-const renderMarkdown = (text: string): React.ReactNode => {
-  if (!text) return null;
-
-  const parts: React.ReactNode[] = [];
-  let remaining = text;
-  let key = 0;
-
-  // Process line by line for better control
-  const lines = remaining.split('\n');
-
-  return lines.map((line, lineIdx) => {
-    const elements: React.ReactNode[] = [];
-    let lineRemaining = line;
-    let partKey = 0;
-
-    // Simple regex-based parsing
-    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
-    let lastIndex = 0;
-    let match;
-
-    while ((match = regex.exec(lineRemaining)) !== null) {
-      // Add text before match
-      if (match.index > lastIndex) {
-        elements.push(lineRemaining.slice(lastIndex, match.index));
-      }
-
-      if (match[2]) {
-        // Bold **text**
-        elements.push(<strong key={`${lineIdx}-${partKey++}`} className="font-semibold">{match[2]}</strong>);
-      } else if (match[3]) {
-        // Italic *text*
-        elements.push(<em key={`${lineIdx}-${partKey++}`} className="italic">{match[3]}</em>);
-      } else if (match[4]) {
-        // Code `text`
-        elements.push(
-          <code key={`${lineIdx}-${partKey++}`} className="px-1.5 py-0.5 bg-surface-elevated rounded text-[0.9em] font-mono">
-            {match[4]}
-          </code>
-        );
-      }
-
-      lastIndex = regex.lastIndex;
-    }
-
-    // Add remaining text
-    if (lastIndex < lineRemaining.length) {
-      elements.push(lineRemaining.slice(lastIndex));
-    }
-
-    return (
-      <React.Fragment key={lineIdx}>
-        {elements.length > 0 ? elements : line}
-        {lineIdx < lines.length - 1 && <br />}
-      </React.Fragment>
-    );
-  });
-};
 
 type ViewMode = 'developer' | 'client';
 
@@ -281,6 +222,14 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Resizable input area (height)
+  const { size: inputHeight, handleResize: handleInputResize } = useResizable(
+    200, // initial height
+    120, // min height
+    400, // max height
+    'adk_input_height'
+  );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -515,13 +464,23 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input Area Resize Handle */}
+      <ResizeHandle
+        direction="vertical"
+        onResize={(delta) => handleInputResize(-delta)} // Negative because dragging up should increase height
+        className="w-full"
+      />
+
       {/* Input Area */}
-      <div className="flex-shrink-0 bg-surface p-4 border-t border-border">
-        <div className="max-w-4xl mx-auto space-y-3">
+      <div
+        className="flex-shrink-0 bg-surface p-4 border-t border-border overflow-hidden"
+        style={{ height: inputHeight }}
+      >
+        <div className="max-w-4xl mx-auto space-y-3 h-full flex flex-col">
 
             {/* Attachment Bar */}
             {(attachments.length > 0 || isUploading) && (
-              <div className="flex flex-col gap-2 p-3 bg-surface-alt border border-border rounded-lg">
+              <div className="flex flex-col gap-2 p-3 bg-surface-alt border border-border rounded-lg flex-shrink-0">
                 <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-foreground-muted">Arquivos anexados</span>
                     {attachments.length > 0 && (
@@ -565,7 +524,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
 
             {/* Slate Editor Component */}
             <div className={`
-                relative bg-surface-elevated border transition-all duration-300 rounded-xl overflow-hidden
+                relative bg-surface-elevated border transition-all duration-300 rounded-xl overflow-hidden flex-1 min-h-0
                 ${isLoading ? 'border-border-subtle opacity-70' : 'border-border focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10'}
             `}>
                 <SlateEditor
@@ -593,7 +552,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
             </div>
 
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
 
               <div className="flex items-center gap-2">
                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} multiple disabled={isLoading} />

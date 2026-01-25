@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, createContext, useContext } fr
 import AgentSelector from './components/AgentSelector';
 import ChatWorkspace from './components/ChatWorkspace';
 import ConfigPanel from './components/ConfigPanel';
+import ResizeHandle, { useResizable } from './components/ResizeHandle';
 import { AVAILABLE_AGENTS, DEFAULT_CONFIG, loadTheme, saveTheme, loadFont, clearMessages as clearStoredMessages } from './constants';
 import { Message, AgentRole, RuntimeConfig, Attachment, OutputStyle, MessagePart, Theme } from './types';
 import { sendPromptToAgent } from './services/adkService';
@@ -51,6 +52,14 @@ const App: React.FC = () => {
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig>(DEFAULT_CONFIG);
 
   const activeAgent = AVAILABLE_AGENTS.find(a => a.id === activeAgentId) || AVAILABLE_AGENTS[0];
+
+  // Resizable sidebar
+  const { size: sidebarWidth, handleResize: handleSidebarResize } = useResizable(
+    280, // initial
+    200, // min
+    500, // max
+    'adk_sidebar_width'
+  );
 
   // Theme handler
   const setTheme = useCallback((newTheme: Theme) => {
@@ -198,12 +207,22 @@ const App: React.FC = () => {
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <div className="flex h-screen w-screen overflow-hidden bg-surface text-foreground transition-colors duration-300">
 
-        <AgentSelector
-          selectedAgentId={activeAgentId}
-          onSelectAgent={handleAgentSelect}
+        {/* Resizable Sidebar */}
+        <div style={{ width: sidebarWidth }} className="flex-shrink-0">
+          <AgentSelector
+            selectedAgentId={activeAgentId}
+            onSelectAgent={handleAgentSelect}
+          />
+        </div>
+
+        {/* Sidebar Resize Handle */}
+        <ResizeHandle
+          direction="horizontal"
+          onResize={handleSidebarResize}
+          className="z-10"
         />
 
-        <div className="flex-1 flex flex-col relative">
+        <div className="flex-1 flex flex-col relative min-w-0">
           <ChatWorkspace
             activeAgent={activeAgent}
             messages={messages}
