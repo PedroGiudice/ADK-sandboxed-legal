@@ -37,6 +37,7 @@ export interface AgentProfile {
   description: string;
   version: string;
   status: 'active' | 'maintenance' | 'deprecated';
+  mcpServers?: MCPServer[]; // MCPs especificos deste agente
 }
 
 export interface Message {
@@ -58,4 +59,59 @@ export interface RuntimeConfig {
   securityFilterLevel: 'low' | 'medium' | 'high';
   outputStyle: OutputStyle;
   geminiApiKey: string; // Stored securely, never logged
+}
+
+// === MCP (Model Context Protocol) ===
+
+export interface MCPServer {
+  id: string;
+  name: string;
+  url: string;
+  tools?: string[];
+  enabled: boolean;
+  lastHealthCheck?: Date;
+  status?: 'online' | 'offline' | 'unknown';
+}
+
+// === Filesystem ===
+
+export interface LocalFolder {
+  id: string;
+  path: string;
+  alias: string; // Nome amigavel
+  readOnly: boolean;
+  enabled: boolean;
+}
+
+export interface FilesystemConfig {
+  mode: 'whitelist' | 'unrestricted';
+  whitelistedFolders: LocalFolder[];
+}
+
+// === Google Drive ===
+
+export interface GoogleDriveAuth {
+  clientId: string;
+  clientSecret: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  userEmail?: string;
+}
+
+export interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  modifiedTime?: string;
+  size?: string;
+  parents?: string[];
+}
+
+// === Integrations Config (combines all) ===
+
+export interface IntegrationsConfig {
+  filesystem: FilesystemConfig;
+  googleDrive?: GoogleDriveAuth;
+  mcpServers: MCPServer[];
 }

@@ -1,4 +1,4 @@
-import { AgentProfile, RuntimeConfig, Theme } from './types';
+import { AgentProfile, RuntimeConfig, Theme, MCPServer, LocalFolder, FilesystemConfig, IntegrationsConfig } from './types';
 import themesMetadata from './themes/themes-metadata.json';
 
 // Theme configuration from TOML-generated JSON
@@ -10,6 +10,10 @@ export const AVAILABLE_THEMES = Object.keys(THEME_CONFIG) as Theme[];
 const THEME_STORAGE_KEY = 'adk_theme_v1';
 const FONT_STORAGE_KEY = 'adk_font_v1';
 const MESSAGES_STORAGE_KEY = 'adk_chat_history_v1';
+const MCP_SERVERS_STORAGE_KEY = 'adk_mcp_servers_v1';
+const LOCAL_FOLDERS_STORAGE_KEY = 'adk_local_folders_v1';
+const FILESYSTEM_CONFIG_STORAGE_KEY = 'adk_filesystem_config_v1';
+const INTEGRATIONS_STORAGE_KEY = 'adk_integrations_v1';
 
 // Common fonts available on most Linux systems
 export const COMMON_FONTS = [
@@ -113,4 +117,113 @@ export const DEFAULT_CONFIG: RuntimeConfig = {
   securityFilterLevel: 'high',
   outputStyle: 'normal',
   geminiApiKey: loadSecureKey(),
+};
+
+// === MCP Servers Storage ===
+
+export const loadMCPServers = (): MCPServer[] => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(MCP_SERVERS_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+  }
+  return [];
+};
+
+export const saveMCPServers = (servers: MCPServer[]): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(MCP_SERVERS_STORAGE_KEY, JSON.stringify(servers));
+  }
+};
+
+// === Local Folders Storage ===
+
+export const loadLocalFolders = (): LocalFolder[] => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(LOCAL_FOLDERS_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+  }
+  return [];
+};
+
+export const saveLocalFolders = (folders: LocalFolder[]): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(LOCAL_FOLDERS_STORAGE_KEY, JSON.stringify(folders));
+  }
+};
+
+// === Filesystem Config Storage ===
+
+export const DEFAULT_FILESYSTEM_CONFIG: FilesystemConfig = {
+  mode: 'whitelist',
+  whitelistedFolders: [],
+};
+
+export const loadFilesystemConfig = (): FilesystemConfig => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(FILESYSTEM_CONFIG_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return DEFAULT_FILESYSTEM_CONFIG;
+      }
+    }
+  }
+  return DEFAULT_FILESYSTEM_CONFIG;
+};
+
+export const saveFilesystemConfig = (config: FilesystemConfig): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(FILESYSTEM_CONFIG_STORAGE_KEY, JSON.stringify(config));
+  }
+};
+
+// === Full Integrations Config ===
+
+export const DEFAULT_INTEGRATIONS_CONFIG: IntegrationsConfig = {
+  filesystem: DEFAULT_FILESYSTEM_CONFIG,
+  mcpServers: [],
+};
+
+export const loadIntegrationsConfig = (): IntegrationsConfig => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(INTEGRATIONS_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return DEFAULT_INTEGRATIONS_CONFIG;
+      }
+    }
+  }
+  return DEFAULT_INTEGRATIONS_CONFIG;
+};
+
+export const saveIntegrationsConfig = (config: IntegrationsConfig): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(INTEGRATIONS_STORAGE_KEY, JSON.stringify(config));
+  }
+};
+
+// === UUID Generator ===
+
+export const generateId = (): string => {
+  return crypto.randomUUID ? crypto.randomUUID() :
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
 };

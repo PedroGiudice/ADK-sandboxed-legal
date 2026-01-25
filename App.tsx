@@ -2,9 +2,10 @@ import React, { useState, useCallback, useEffect, createContext, useContext } fr
 import AgentSelector from './components/AgentSelector';
 import ChatWorkspace from './components/ChatWorkspace';
 import ConfigPanel from './components/ConfigPanel';
+import IntegrationsPanel from './components/IntegrationsPanel';
 import ResizeHandle, { useResizable } from './components/ResizeHandle';
-import { AVAILABLE_AGENTS, DEFAULT_CONFIG, loadTheme, saveTheme, loadFont, clearMessages as clearStoredMessages } from './constants';
-import { Message, AgentRole, RuntimeConfig, Attachment, OutputStyle, MessagePart, Theme } from './types';
+import { AVAILABLE_AGENTS, DEFAULT_CONFIG, loadTheme, saveTheme, loadFont, clearMessages as clearStoredMessages, loadIntegrationsConfig } from './constants';
+import { Message, AgentRole, RuntimeConfig, Attachment, OutputStyle, MessagePart, Theme, IntegrationsConfig } from './types';
 import { sendPromptToAgent } from './services/adkService';
 import { runJurisprudenceAgent } from './services/agentBridge';
 import { check } from '@tauri-apps/plugin-updater';
@@ -49,7 +50,9 @@ const App: React.FC = () => {
   });
 
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isIntegrationsOpen, setIsIntegrationsOpen] = useState(false);
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig>(DEFAULT_CONFIG);
+  const [integrationsConfig, setIntegrationsConfig] = useState<IntegrationsConfig>(loadIntegrationsConfig);
 
   const activeAgent = AVAILABLE_AGENTS.find(a => a.id === activeAgentId) || AVAILABLE_AGENTS[0];
 
@@ -94,8 +97,11 @@ const App: React.FC = () => {
           setUpdateStatus('downloading');
           await update.downloadAndInstall((event) => {
             if (event.event === 'Progress') {
-              const progress = (event.data.chunkLength / event.data.contentLength) * 100;
-              setUpdateProgress(progress);
+              const data = event.data as { chunkLength: number; contentLength?: number };
+              if (data.contentLength && data.contentLength > 0) {
+                const progress = (data.chunkLength / data.contentLength) * 100;
+                setUpdateProgress(progress);
+              }
             }
           });
           setUpdateStatus('ready');
@@ -229,6 +235,7 @@ const App: React.FC = () => {
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
             onOpenConfig={() => setIsConfigOpen(true)}
+            onOpenIntegrations={() => setIsIntegrationsOpen(true)}
           />
 
           <ConfigPanel
@@ -237,6 +244,11 @@ const App: React.FC = () => {
             config={runtimeConfig}
             onUpdateConfig={setRuntimeConfig}
             onClearChat={handleClearChat}
+          />
+
+          <IntegrationsPanel
+            isOpen={isIntegrationsOpen}
+            onClose={() => setIsIntegrationsOpen(false)}
           />
         </div>
       </div>
