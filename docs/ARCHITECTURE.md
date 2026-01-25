@@ -207,17 +207,205 @@ MCP_SERVER_COUNT = os.getenv('MCP_SERVER_COUNT')
 
 ---
 
+## Sandboxing Logico
+
+O Legal Workbench implementa **isolamento logico por caso**, garantindo que cada caso juridico opere em seu proprio contexto sem interferencia de outros casos.
+
+### Principios
+
+1. **Zero Estado Compartilhado**: Casos nao compartilham memoria, arquivos ou historico
+2. **Versionamento Automatico**: Cada mudanca e versionada via Git invisivel
+3. **Execucao Paralela**: Multiplos casos podem executar simultaneamente
+4. **Auditabilidade**: Historico completo de todas as operacoes
+
+### Hierarquia Case -> Agent
+
+```
+Usuario seleciona Caso
+        |
+        v
+Contexto do caso carregado (contextPath, .registry.json)
+        |
+        v
+Usuario seleciona Agente (so apos selecionar caso)
+        |
+        v
+Agente executa no contexto isolado do caso
+```
+
+**UX:**
+- Agentes so sao visiveis apos selecionar um caso
+- Trocar de agente mantem o contexto do caso
+- Trocar de caso reseta o agente selecionado
+
+### Estrutura de Diretorio por Caso
+
+```
+workspace/
+|-- .registry.json          # Indice de todos os casos
+|-- Cliente_A/              # Pasta do cliente (opcional)
+|   |-- Processo_123/       # Diretorio do caso
+|   |   |-- .adk_state/     # Estado do agente
+|   |   |   |-- checkpoints/    # Checkpoints de pipeline
+|   |   |   |-- sessions/       # Historico de sessoes
+|   |   |   |-- .adk_session.json # Sessao ativa
+|   |   |-- .context/       # Contexto RAG (ignorado pelo Git)
+|   |   |-- .git/           # Repositorio Git invisivel
+|   |   |-- .gitignore      # Ignora .context/, logs, etc.
+|   |   |-- docs/           # Documentos do caso
+|   |   |-- drafts/         # Rascunhos gerados
+```
+
+### GitStateBackend
+
+Backend de versionamento Git invisivel para cada caso:
+
+```python
+class GitStateBackend:
+    """
+    Cada caso tem seu proprio repositorio Git isolado para:
+    - Versionamento automatico de documentos
+    - Historico auditavel de mudancas
+    - Rollback de estado
+    """
+
+    def create_checkpoint(self, phase: str, message: str) -> str:
+        """Cria commit automatico apos cada fase do pipeline."""
+
+    def get_history(self, limit: int = 10) -> List[GitCommit]:
+        """Retorna historico de commits do caso."""
+
+    def rollback_to(self, commit_hash: str) -> bool:
+        """Reverte caso para estado anterior."""
+```
+
+**Commits automaticos:**
+- Apos cada fase da pipeline (verificacao, construcao, redacao)
+- Quando documentos sao adicionados/modificados
+- Antes de operacoes destrutivas
+
+### SessionManager
+
+Orquestra o ciclo de vida de sessoes isoladas:
+
+```python
+class SessionManager:
+    """
+    Responsabilidades:
+    - Criar/resumir sessoes
+    - Gerenciar isolamento de estado por caso
+    - Orquestrar pipeline com contexto correto
+    - Emitir eventos para o frontend
+    """
+
+    def start_session(case_path: Path, case_id: str) -> SessionInfo:
+        """Inicia nova sessao no contexto do caso."""
+
+    def run_pipeline(session_id: str, consultation: dict) -> PipelineResult:
+        """Executa pipeline na sessao com isolamento."""
+
+    def resume_session(session_id: str) -> SessionInfo:
+        """Retoma sessao de checkpoint."""
+```
+
+**Eventos emitidos:**
+- `session_created`: Nova sessao iniciada
+- `loop_status`: Progresso da pipeline (fase, porcentagem)
+- `checkpoint_created`: Checkpoint salvo
+- `cli_result`: Resultado final
+
+### session_cli.py
+
+Interface CLI para execucao via Tauri Shell:
+
+```bash
+# Iniciar sessao e executar pipeline
+python -m brazilian_legal_pipeline.session_cli start-and-run \
+  --case-path /workspace/cliente/caso \
+  --case-id "case-abc123" \
+  --consultation '{"consulta": {"texto": "..."}}'
+
+# Apenas iniciar sessao
+python -m brazilian_legal_pipeline.session_cli start \
+  --case-path /workspace/cliente/caso \
+  --case-id "case-abc123"
+
+# Executar em sessao existente
+python -m brazilian_legal_pipeline.session_cli run \
+  --session-id "session-xyz789" \
+  --consultation '{"consulta": {"texto": "..."}}'
+
+# Ver status Git do caso
+python -m brazilian_legal_pipeline.session_cli git-status \
+  --case-path /workspace/cliente/caso
+```
+
+### Fluxo Completo de Sandboxing
+
+```
+1. Usuario cria caso (NewCaseModal)
+       |
+       v
+2. caseRegistryService.createCase()
+   - Cria diretorio: workspace/cliente/caso/
+   - Cria estrutura: .adk_state/, .context/, docs/, drafts/
+   - Adiciona ao .registry.json
+       |
+       v
+3. Usuario seleciona caso no Sidebar
+   - App.tsx: setActiveCaseId(caseId)
+   - Agentes tornam-se disponiveis
+       |
+       v
+4. Usuario seleciona agente e envia consulta
+       |
+       v
+5. App.tsx handleSendMessage()
+   - Monta consulta estruturada com contexto do caso
+   - Chama startAndRunCaseSession(casePath, caseId, consultation)
+       |
+       v
+6. agentBridge.ts -> Tauri Shell
+   - Executa: python -m session_cli start-and-run
+   - Passa casePath e caseId isolados
+       |
+       v
+7. SessionManager.start_session()
+   - Inicializa GitStateBackend para o caso
+   - Cria SessionInfo em .adk_state/.adk_session.json
+   - Emite evento session_created
+       |
+       v
+8. SessionManager.run_pipeline()
+   - Pipeline executa no diretorio do caso
+   - Checkpoints salvos em .adk_state/checkpoints/
+   - Commits Git automaticos apos cada fase
+   - Eventos loop_status emitidos para UI
+       |
+       v
+9. Resultado salvo em caso/drafts/
+   - Commit final no Git do caso
+   - Evento cli_result retornado ao frontend
+```
+
+---
+
 ## Seguranca
 
-### Sandboxing de Casos
+### Isolamento de Acesso
 
-Cada caso opera em seu proprio diretorio:
-- `.adk_state/`: Estado do agente (checkpoints, sessoes)
-- `.context/`: Arquivos de contexto
-- Agente so pode acessar arquivos dentro do caso
+- Cada agente so pode acessar arquivos dentro de seu caso
+- Variaveis de ambiente nao vazam entre sessoes
+- API keys nunca sao escritas em arquivos do caso
 
 ### Credenciais
 
 - API keys em `.env` (nunca commitado)
 - OAuth tokens em Tauri Store (criptografado)
 - Secrets nunca passados para frontend
+
+### Auditoria
+
+- Git log completo de todas as mudancas por caso
+- SessionInfo registra quem/quando/o que executou
+- Checkpoints permitem rollback em caso de erro

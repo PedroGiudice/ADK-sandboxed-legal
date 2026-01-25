@@ -91,6 +91,185 @@ python -m brazilian_legal_pipeline.session_cli start-and-run \
 
 ---
 
+## Sistema de Sandboxing Logico
+
+O Legal Workbench implementa isolamento logico por caso atraves de tres componentes principais.
+
+### Componentes Python
+
+#### 1. GitStateBackend (`git_state.py`)
+
+Versionamento Git invisivel para cada caso:
+
+```python
+from brazilian_legal_pipeline.git_state import GitStateBackend
+
+# Inicializar para um caso
+git = GitStateBackend(Path("/workspace/cliente/caso"))
+
+# Criar checkpoint apos fase
+commit_hash = git.create_checkpoint(
+    phase="verificacao",
+    message="Fase de verificacao concluida"
+)
+
+# Ver historico
+commits = git.get_history(limit=10)
+for c in commits:
+    print(f"{c.short_hash}: {c.message}")
+
+# Rollback se necessario
+git.rollback_to("abc1234")
+```
+
+**O que e versionado:**
+- Documentos em `docs/`
+- Rascunhos em `drafts/`
+- Estado em `.adk_state/`
+
+**O que NAO e versionado (.gitignore):**
+- `.context/` (contexto RAG, pode ser grande)
+- Logs e arquivos temporarios
+
+#### 2. SessionManager (`session_manager.py`)
+
+Orquestra sessoes isoladas por caso:
+
+```python
+from brazilian_legal_pipeline.session_manager import SessionManager
+
+manager = SessionManager()
+
+# Iniciar sessao
+session = manager.start_session(
+    case_path=Path("/workspace/cliente/caso"),
+    case_id="case-abc123"
+)
+print(f"Sessao: {session.session_id}")
+
+# Executar pipeline na sessao
+result = manager.run_pipeline(
+    session_id=session.session_id,
+    consultation={
+        "consulta": {"texto": "Analise este contrato..."},
+        "contexto": {"area_direito": "civil"}
+    }
+)
+
+# Resumir sessao de checkpoint
+session = manager.resume_session("session-xyz789")
+```
+
+**Metadados de Sessao (`.adk_state/.adk_session.json`):**
+```json
+{
+  "session_id": "session-20260125-051234",
+  "case_id": "case-abc123",
+  "case_path": "/workspace/cliente/caso",
+  "created_at": "2026-01-25T05:12:34Z",
+  "status": "active",
+  "last_checkpoint": "checkpoint-fase2",
+  "git_commit": "abc1234"
+}
+```
+
+#### 3. session_cli.py
+
+CLI para invocacao via Tauri Shell:
+
+```bash
+# Comandos disponiveis
+python -m brazilian_legal_pipeline.session_cli --help
+
+# Iniciar e executar (mais comum)
+python -m session_cli start-and-run \
+  --case-path /workspace/caso \
+  --case-id "case-123" \
+  --consultation '{"consulta": {...}}'
+
+# Apenas iniciar sessao
+python -m session_cli start \
+  --case-path /workspace/caso \
+  --case-id "case-123"
+
+# Executar em sessao existente
+python -m session_cli run \
+  --session-id "session-xyz" \
+  --consultation '{"consulta": {...}}'
+
+# Ver status Git do caso
+python -m session_cli git-status \
+  --case-path /workspace/caso
+```
+
+### Integracao com Frontend
+
+O `agentBridge.ts` chama o `session_cli.py` via Tauri Shell:
+
+```typescript
+// src/services/agentBridge.ts
+export const startAndRunCaseSession = async (
+  casePath: string,
+  caseId: string,
+  consultation: Record<string, unknown>,
+  options?: SessionOptions
+): Promise<SessionResult> => {
+
+  const command = Command.create('python', [
+    '-m', 'brazilian_legal_pipeline.session_cli',
+    'start-and-run',
+    '--case-path', casePath,
+    '--case-id', caseId,
+    '--consultation', JSON.stringify(consultation)
+  ], {
+    cwd: 'adk-agents'  // Importante: executa do diretorio adk-agents
+  });
+
+  // Eventos sao parseados de stdout
+  command.stdout.on('data', (line) => {
+    const event = parseADKEvent(line);
+    if (event?.type === 'loop_status' && options?.onProgress) {
+      options.onProgress({
+        state: event.data.state,
+        currentPhase: event.data.current_phase,
+        progressPercent: event.data.progress_percent
+      });
+    }
+  });
+
+  // ...
+};
+```
+
+### Hierarquia Case -> Agent na UI
+
+O frontend implementa selecao hierarquica:
+
+1. **Sidebar.tsx**: Usuario primeiro seleciona um Caso
+2. **Agentes aparecem**: So apos caso selecionado
+3. **App.tsx**: Mantem `activeCaseId` e `activeAgentId` separados
+4. **Envio**: Consulta inclui `contextPath` do caso
+
+```typescript
+// src/App.tsx
+const handleSendMessage = async (content: string, ...) => {
+  // Obter caso ativo
+  const currentCase = cases.find(c => c.id === activeCaseId);
+
+  if (activeAgent?.id === 'agent-legal-pipeline' && currentCase?.contextPath) {
+    // Executa no contexto isolado do caso
+    const result = await startAndRunCaseSession(
+      currentCase.contextPath,  // Sandbox do caso
+      currentCase.id,
+      consultation,
+      { onProgress: (p) => setPipelineProgress(p) }
+    );
+  }
+};
+```
+
+---
+
 ## Ferramentas Claude Code
 
 ### Subagentes (.claude/agents/)
