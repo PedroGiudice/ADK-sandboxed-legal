@@ -1,10 +1,74 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { Descendant } from 'slate';
 import { AgentProfile, Message, AgentRole, Attachment, OutputStyle, MessagePart } from '../types';
 import {
   SendIcon, PaperclipIcon, XIcon, AttachmentIcon,
   CopyIcon, CheckIcon, TrashIcon, GeoSpinner,
   TerminalIcon, WrenchIcon, CodeIcon, BookOpenIcon, PlayIcon, ChevronDownIcon, SettingsIcon
 } from './Icons';
+import { SlateEditor, serializeToMarkdown, isEditorEmpty, initialValue } from './editor';
+
+/**
+ * Simple markdown renderer for basic formatting
+ * Supports: **bold**, *italic*, `code`, and line breaks
+ */
+const renderMarkdown = (text: string): React.ReactNode => {
+  if (!text) return null;
+
+  const parts: React.ReactNode[] = [];
+  let remaining = text;
+  let key = 0;
+
+  // Process line by line for better control
+  const lines = remaining.split('\n');
+
+  return lines.map((line, lineIdx) => {
+    const elements: React.ReactNode[] = [];
+    let lineRemaining = line;
+    let partKey = 0;
+
+    // Simple regex-based parsing
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(lineRemaining)) !== null) {
+      // Add text before match
+      if (match.index > lastIndex) {
+        elements.push(lineRemaining.slice(lastIndex, match.index));
+      }
+
+      if (match[2]) {
+        // Bold **text**
+        elements.push(<strong key={`${lineIdx}-${partKey++}`} className="font-semibold">{match[2]}</strong>);
+      } else if (match[3]) {
+        // Italic *text*
+        elements.push(<em key={`${lineIdx}-${partKey++}`} className="italic">{match[3]}</em>);
+      } else if (match[4]) {
+        // Code `text`
+        elements.push(
+          <code key={`${lineIdx}-${partKey++}`} className="px-1.5 py-0.5 bg-surface-elevated rounded text-[0.9em] font-mono">
+            {match[4]}
+          </code>
+        );
+      }
+
+      lastIndex = regex.lastIndex;
+    }
+
+    // Add remaining text
+    if (lastIndex < lineRemaining.length) {
+      elements.push(lineRemaining.slice(lastIndex));
+    }
+
+    return (
+      <React.Fragment key={lineIdx}>
+        {elements.length > 0 ? elements : line}
+        {lineIdx < lines.length - 1 && <br />}
+      </React.Fragment>
+    );
+  });
+};
 
 type ViewMode = 'developer' | 'client';
 
@@ -53,7 +117,7 @@ const getClientIntent = (part: MessagePart): { icon: React.ReactNode, text: stri
  */
 const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewMode: ViewMode }> = ({ parts, content, viewMode }) => {
   if (!parts || parts.length === 0) {
-    return <div className="whitespace-pre-wrap font-sans font-light text-foreground leading-relaxed">{content}</div>;
+    return <div className="whitespace-pre-wrap font-sans text-foreground leading-relaxed">{renderMarkdown(content)}</div>;
   }
 
   return (
@@ -63,12 +127,12 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewM
         // --- CLIENT MODE RENDERING ---
         if (viewMode === 'client') {
             const intent = getClientIntent(part);
-            
+
             // If text, render normally. If mapped intent exists, render the "Status Pill".
             if (part.type === 'text') {
                 return (
-                    <div key={idx} className="whitespace-pre-wrap font-serif text-foreground leading-7 my-2 text-sm">
-                        {part.content}
+                    <div key={idx} className="whitespace-pre-wrap font-sans text-foreground leading-7 my-2 text-[15px]">
+                        {renderMarkdown(part.content)}
                     </div>
                 );
             }
@@ -90,8 +154,8 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewM
         switch (part.type) {
           case 'text':
             return (
-                <div key={idx} className="whitespace-pre-wrap font-sans font-light text-foreground leading-relaxed my-1">
-                    {part.content}
+                <div key={idx} className="whitespace-pre-wrap font-sans text-foreground leading-7 my-2 text-[15px]">
+                    {renderMarkdown(part.content)}
                 </div>
             );
 
@@ -207,14 +271,17 @@ interface ChatWorkspaceProps {
 
 const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, onSendMessage, isLoading = false, onOpenConfig }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('developer');
-  
-  const [inputValue, setInputValue] = useState('');
+
+  // Slate editor state
+  const [editorValue, setEditorValue] = useState<Descendant[]>(initialValue);
+  const [editorKey, setEditorKey] = useState(0); // Key to force re-render on reset
+
   const [outputStyle, setOutputStyle] = useState<OutputStyle>('normal');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -226,19 +293,17 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
     scrollToBottom();
   }, [messages, isLoading, isUploading, viewMode]);
 
-  const handleSend = () => {
-    if ((!inputValue.trim() && attachments.length === 0) || isLoading || isUploading) return;
-    onSendMessage(inputValue, attachments, outputStyle);
-    setInputValue('');
-    setAttachments([]);
-  };
+  const handleSend = useCallback(() => {
+    if ((isEditorEmpty(editorValue) && attachments.length === 0) || isLoading || isUploading) return;
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
+    const content = serializeToMarkdown(editorValue);
+    onSendMessage(content, attachments, outputStyle);
+
+    // Reset editor
+    setEditorValue(initialValue);
+    setEditorKey(prev => prev + 1); // Force re-render to clear editor
+    setAttachments([]);
+  }, [editorValue, attachments, outputStyle, isLoading, isUploading, onSendMessage]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -292,54 +357,55 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-surface relative">
+    <div className="flex-1 flex flex-col bg-surface relative h-full overflow-hidden">
 
       {/* Top Bar with Mode Toggle */}
-      <div className="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/95 backdrop-blur-sm z-10">
+      <div className="flex-shrink-0 h-14 flex items-center justify-between px-6 border-b border-border bg-surface/95 backdrop-blur-sm z-10">
          <div className="flex flex-col">
-            <h1 className="text-foreground font-medium tracking-wide text-sm flex items-center gap-2">
+            <h1 className="text-foreground font-medium text-sm flex items-center gap-2">
                 {activeAgent.name}
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
-                <span className={`w-1 h-1 rounded-full ${isLoading ? 'bg-warning animate-pulse' : 'bg-success'}`}></span>
-                <p className="text-[9px] text-foreground-subtle font-mono uppercase tracking-tighter">Session ID: 0x82A1</p>
+                <span className={`w-1.5 h-1.5 rounded-full ${isLoading ? 'bg-warning animate-pulse' : 'bg-success'}`}></span>
+                <p className="text-[10px] text-foreground-muted font-mono">Sessao ativa</p>
             </div>
          </div>
 
          {/* Center: Mode Toggle */}
-         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-surface-alt/50 p-1 rounded-full border border-border">
+         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-surface-alt p-1 rounded-lg border border-border">
              <button
                 onClick={() => setViewMode('developer')}
-                className={`px-3 py-1 text-[9px] uppercase font-bold tracking-wider rounded-full transition-all ${
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
                     viewMode === 'developer'
                     ? 'bg-surface-elevated text-foreground shadow-sm'
                     : 'text-foreground-subtle hover:text-foreground-muted'
                 }`}
              >
-                Dev_Mode
+                Desenvolvedor
              </button>
              <button
                 onClick={() => setViewMode('client')}
-                className={`px-3 py-1 text-[9px] uppercase font-bold tracking-wider rounded-full transition-all ${
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
                     viewMode === 'client'
-                    ? 'bg-accent-muted text-accent shadow-sm'
+                    ? 'bg-accent text-surface shadow-sm'
                     : 'text-foreground-subtle hover:text-foreground-muted'
                 }`}
              >
-                Client_View
+                Cliente
              </button>
          </div>
 
-         <div className="flex items-center gap-4">
+         <div className="flex items-center gap-3">
             {isLoading && (
-                <div className="flex items-center gap-2 text-accent/80 animate-pulse">
-                    <span className="text-[10px] font-mono tracking-widest">THINKING_STREAM</span>
+                <div className="flex items-center gap-2 text-accent animate-pulse">
+                    <GeoSpinner className="w-4 h-4" />
+                    <span className="text-xs font-medium">Processando...</span>
                 </div>
             )}
             {onOpenConfig && (
                 <button
                     onClick={onOpenConfig}
-                    className="p-2 text-foreground-subtle hover:text-accent hover:bg-surface-elevated/50 rounded-sm transition-all"
+                    className="p-2 text-foreground-muted hover:text-accent hover:bg-surface-elevated rounded-lg transition-all"
                     title="Configuracoes"
                 >
                     <SettingsIcon className="w-5 h-5" />
@@ -349,15 +415,21 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth bg-surface custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-6 scroll-smooth bg-surface custom-scrollbar">
         {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-foreground-subtle select-none">
+            <div className="h-full flex flex-col items-center justify-center text-foreground-muted select-none">
                 {isLoading ? (
-                    <GeoSpinner className="w-10 h-10 mb-4" />
+                    <div className="flex flex-col items-center gap-3">
+                        <GeoSpinner className="w-8 h-8" />
+                        <p className="text-sm text-foreground-muted">Processando...</p>
+                    </div>
                 ) : (
-                    <div className="flex flex-col items-center gap-2 opacity-20">
-                        <span className="text-4xl font-mono text-foreground-subtle">://</span>
-                        <p className="text-[10px] font-mono tracking-[0.2em] text-foreground-subtle uppercase">System_Standby</p>
+                    <div className="flex flex-col items-center gap-3 opacity-50">
+                        <div className="w-16 h-16 rounded-2xl bg-surface-elevated flex items-center justify-center">
+                            <span className="text-2xl text-foreground-muted">?</span>
+                        </div>
+                        <p className="text-sm text-foreground-muted">Nenhuma conversa ainda</p>
+                        <p className="text-xs text-foreground-subtle">Digite sua consulta juridica abaixo</p>
                     </div>
                 )}
             </div>
@@ -373,22 +445,22 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
 
                         {/* Header Label */}
                         <div className={`flex items-center gap-2 mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                            <span className={`text-[9px] font-bold uppercase tracking-[0.15em] ${
-                                isUser ? 'text-accent/80' : 'text-foreground-subtle'
+                            <span className={`text-xs font-medium ${
+                                isUser ? 'text-accent' : 'text-foreground-muted'
                             }`}>
-                                {isUser ? 'CLIENT_INPUT' : (viewMode === 'client' ? 'LEGAL_COUNSEL' : 'ADK_OUTPUT')}
+                                {isUser ? 'Voce' : (viewMode === 'client' ? 'Assistente Juridico' : 'Agente ADK')}
                             </span>
-                            <span className="text-[9px] text-foreground-subtle font-mono">
-                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            <span className="text-[11px] text-foreground-subtle">
+                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
 
                         {/* Content Bubble */}
                         <div className={`
-                            relative p-5 text-[13px] leading-relaxed transition-all duration-300
+                            relative p-5 text-[15px] leading-relaxed transition-all duration-300
                             ${isUser
-                                ? 'bg-surface-elevated border border-border rounded-sm text-foreground'
-                                : 'bg-surface-alt border border-border-subtle rounded-sm text-foreground'
+                                ? 'bg-surface-elevated border border-border rounded-xl text-foreground'
+                                : 'bg-surface-alt border border-border-subtle rounded-xl text-foreground'
                             }
                         `}>
                             {isUser ? (
@@ -427,14 +499,15 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
         )}
         
         {/* Thinking Indicator */}
-        {isLoading && (
-             <div className="flex flex-col w-full max-w-5xl mx-auto items-start animate-in fade-in slide-in-from-bottom-2 duration-500">
+        {isLoading && messages.length > 0 && (
+             <div className="flex flex-col w-full max-w-5xl mx-auto items-start">
                  <div className="pr-16">
                      <div className="flex items-center gap-2 mb-2">
-                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-accent/50">PROCESSING</span>
+                         <span className="text-xs font-medium text-foreground-muted">Agente ADK</span>
                      </div>
-                     <div className="bg-surface-alt border border-border-subtle rounded-sm p-4 w-12 flex items-center justify-center">
-                         <GeoSpinner className="w-4 h-4" />
+                     <div className="bg-surface-alt border border-border-subtle rounded-xl px-5 py-4 flex items-center gap-3">
+                         <GeoSpinner className="w-5 h-5 text-accent" />
+                         <span className="text-sm text-foreground-muted">Analisando...</span>
                      </div>
                  </div>
              </div>
@@ -443,43 +516,44 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
       </div>
 
       {/* Input Area */}
-      <div className="bg-surface p-6 border-t border-border">
-        <div className="max-w-4xl mx-auto space-y-4">
+      <div className="flex-shrink-0 bg-surface p-4 border-t border-border">
+        <div className="max-w-4xl mx-auto space-y-3">
 
             {/* Attachment Bar */}
             {(attachments.length > 0 || isUploading) && (
-              <div className="flex flex-col gap-2 p-3 bg-surface-alt/50 border border-border rounded-sm animate-in slide-in-from-bottom-1">
+              <div className="flex flex-col gap-2 p-3 bg-surface-alt border border-border rounded-lg">
                 <div className="flex items-center justify-between">
-                    <span className="text-[9px] uppercase font-bold text-foreground-subtle tracking-wider">Payload Cache</span>
+                    <span className="text-xs font-medium text-foreground-muted">Arquivos anexados</span>
                     {attachments.length > 0 && (
                         <button
                             onClick={removeAllAttachments}
-                            className="text-[9px] uppercase font-bold text-error/70 hover:text-error flex items-center gap-1 transition-colors"
+                            className="text-xs font-medium text-error/70 hover:text-error flex items-center gap-1 transition-colors"
                         >
-                            <TrashIcon className="w-2.5 h-2.5" />
-                            Purge_All
+                            <TrashIcon className="w-3 h-3" />
+                            Remover todos
                         </button>
                     )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                     {attachments.map(att => (
-                        <div key={att.id} className="flex items-center gap-2 px-2 py-1 bg-surface-elevated border border-border rounded-sm text-[10px] text-foreground-muted group">
-                            <span className="max-w-[150px] truncate font-mono">{att.name}</span>
-                            <button onClick={() => removeAttachment(att.id)} className="text-foreground-subtle hover:text-error transition-colors">
-                                <XIcon className="w-2.5 h-2.5" />
+                        <div key={att.id} className="flex items-center gap-2 px-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-sm text-foreground-muted">
+                            <AttachmentIcon className="w-3.5 h-3.5" />
+                            <span className="max-w-[180px] truncate">{att.name}</span>
+                            <button onClick={() => removeAttachment(att.id)} className="text-foreground-subtle hover:text-error transition-colors ml-1">
+                                <XIcon className="w-3.5 h-3.5" />
                             </button>
                         </div>
                     ))}
                     {isUploading && (
                         <div className="flex flex-col w-full gap-1.5 mt-1">
-                            <div className="flex justify-between text-[9px] font-mono text-accent">
-                                <span>UPLOADING_CONTEXT</span>
+                            <div className="flex justify-between text-xs text-accent">
+                                <span>Enviando...</span>
                                 <span>{uploadProgress}%</span>
                             </div>
-                            <div className="w-full h-0.5 bg-surface-elevated rounded-full overflow-hidden">
+                            <div className="w-full h-1 bg-surface-elevated rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-accent transition-all duration-300"
+                                    className="h-full bg-accent transition-all duration-300 rounded-full"
                                     style={{ width: `${uploadProgress}%` }}
                                 />
                             </div>
@@ -489,67 +563,70 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
               </div>
             )}
 
-            {/* Input Component */}
+            {/* Slate Editor Component */}
             <div className={`
-                relative bg-surface-elevated/50 border transition-all duration-300 rounded-sm
-                ${isLoading ? 'border-border-subtle' : 'border-border focus-within:border-accent/50 focus-within:bg-surface-elevated/70'}
+                relative bg-surface-elevated border transition-all duration-300 rounded-xl overflow-hidden
+                ${isLoading ? 'border-border-subtle opacity-70' : 'border-border focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10'}
             `}>
-                <textarea
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
+                <SlateEditor
+                    key={editorKey}
+                    value={editorValue}
+                    onChange={setEditorValue}
+                    onSubmit={handleSend}
                     disabled={isLoading}
-                    placeholder={isLoading ? "System is analyzing..." : "Enter legal inquiry..."}
-                    className="w-full p-4 bg-transparent text-foreground placeholder-foreground-subtle focus:outline-none resize-none min-h-[50px] max-h-[180px] text-[13px] font-mono leading-relaxed disabled:cursor-not-allowed"
-                    rows={1}
+                    placeholder={isLoading ? "Processando resposta..." : "Digite sua consulta juridica..."}
                 />
-                <div className="absolute right-2 bottom-2">
+                <div className="absolute right-3 bottom-3 z-10">
                     <button
                         onClick={handleSend}
-                        disabled={(!inputValue.trim() && attachments.length === 0) || isLoading}
+                        disabled={(isEditorEmpty(editorValue) && attachments.length === 0) || isLoading}
                         className={`
-                            p-2 rounded-sm transition-all duration-200
-                            ${(!inputValue.trim() && attachments.length === 0) || isLoading
-                                ? 'text-foreground-subtle'
-                                : 'text-surface bg-accent hover:bg-accent-hover'}
+                            p-2.5 rounded-lg transition-all duration-200
+                            ${(isEditorEmpty(editorValue) && attachments.length === 0) || isLoading
+                                ? 'text-foreground-subtle bg-surface-alt'
+                                : 'text-surface bg-accent hover:bg-accent-hover shadow-sm'}
                         `}
                     >
-                        <SendIcon className="w-3.5 h-3.5" />
+                        <SendIcon className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+            <div className="flex flex-wrap items-center justify-between gap-3">
 
               <div className="flex items-center gap-2">
                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} multiple disabled={isLoading} />
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isLoading}
-                  className="flex items-center gap-2 px-2.5 py-1 text-[10px] uppercase font-bold tracking-widest text-foreground-subtle hover:text-foreground bg-transparent border border-border hover:border-accent/50 rounded-sm transition-all disabled:opacity-20"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-foreground-muted hover:text-foreground bg-surface-alt hover:bg-surface-elevated border border-border rounded-lg transition-all disabled:opacity-30"
                 >
-                  <PaperclipIcon className="w-3 h-3" />
-                  <span>Attach_Context</span>
+                  <PaperclipIcon className="w-4 h-4" />
+                  <span>Anexar arquivo</span>
                 </button>
               </div>
 
               {/* Style Selection */}
-              <div className="flex items-center bg-surface-alt/50 rounded-sm border border-border p-0.5">
-                 {(['concise', 'normal', 'verbose'] as OutputStyle[]).map((style) => (
+              <div className="flex items-center bg-surface-alt rounded-lg border border-border p-1">
+                 {([
+                    { key: 'concise', label: 'Conciso' },
+                    { key: 'normal', label: 'Normal' },
+                    { key: 'verbose', label: 'Detalhado' }
+                  ] as { key: OutputStyle, label: string }[]).map(({ key, label }) => (
                     <button
-                      key={style}
-                      onClick={() => setOutputStyle(style)}
+                      key={key}
+                      onClick={() => setOutputStyle(key)}
                       disabled={isLoading}
                       className={`
-                        px-3 py-1 text-[9px] uppercase font-bold tracking-[0.2em] rounded-sm transition-all
-                        ${outputStyle === style
-                          ? 'bg-surface-elevated text-accent border border-border'
-                          : 'text-foreground-subtle hover:text-foreground-muted'
+                        px-3 py-1 text-xs font-medium rounded-md transition-all
+                        ${outputStyle === key
+                          ? 'bg-surface-elevated text-foreground shadow-sm'
+                          : 'text-foreground-muted hover:text-foreground'
                         }
                       `}
                     >
-                      {style}
+                      {label}
                     </button>
                  ))}
               </div>
