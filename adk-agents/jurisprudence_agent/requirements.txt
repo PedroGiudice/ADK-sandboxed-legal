@@ -1,0 +1,30 @@
+# Jurisprudence Research Agent - Dependencies
+
+# HTTP Client (padrao do projeto)
+httpx>=0.27.0
+
+# HTML Parsing
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+
+# Retry Logic
+tenacity>=8.2.0
+
+# Progress & Console
+rich>=13.0.0
+
+# Data Models
+pydantic>=2.0.0
+
+# LLM for gap analysis (Gemini)
+google-genai>=0.7.0
+
+# Async support
+anyio>=4.0.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# Environment
+python-dotenv>=1.0.0

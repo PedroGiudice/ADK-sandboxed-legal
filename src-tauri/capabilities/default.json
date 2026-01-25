@@ -1,0 +1,28 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default permissions for Legal ADK Sandbox",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "shell:default",
+    "shell:allow-open",
+    "updater:default",
+    "process:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "python",
+          "cmd": "python",
+          "args": true
+        },
+        {
+          "name": "python3",
+          "cmd": "python3",
+          "args": true
+        }
+      ]
+    }
+  ]
+}

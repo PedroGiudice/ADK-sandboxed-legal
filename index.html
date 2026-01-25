@@ -1,33 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Legal Theory ADK Sandbox</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              surface: 'var(--color-surface)',
+              'surface-alt': 'var(--color-surface-alt)',
+              'surface-elevated': 'var(--color-surface-elevated)',
+              foreground: 'var(--color-foreground)',
+              'foreground-muted': 'var(--color-foreground-muted)',
+              'foreground-subtle': 'var(--color-foreground-subtle)',
+              border: 'var(--color-border)',
+              'border-subtle': 'var(--color-border-subtle)',
+              accent: 'var(--color-accent)',
+              'accent-hover': 'var(--color-accent-hover)',
+              'accent-muted': 'var(--color-accent-muted)',
+              success: 'var(--color-success)',
+              warning: 'var(--color-warning)',
+              error: 'var(--color-error)',
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/themes/generated-themes.css" />
     <style>
-      /* 
-         Requested Nerd Fonts. 
+      /*
+         Requested Nerd Fonts.
       */
       body {
         font-family: "Go Mono Nerd Font", "Monaspice Nerd Font", "Symbols Nerd Font", "Code New Roman Nerd Font", monospace;
       }
-      
-      /* Custom scrollbar for Stone theme */
+
+      /* Custom scrollbar using theme variables */
       ::-webkit-scrollbar {
         width: 10px;
         height: 10px;
       }
       ::-webkit-scrollbar-track {
-        background: #1c1917; /* stone-900 */
+        background: var(--scrollbar-track, #1a1a1a);
       }
       ::-webkit-scrollbar-thumb {
-        background: #44403c; /* stone-700 */
+        background: var(--scrollbar-thumb, #404040);
         border-radius: 0px;
-        border: 2px solid #1c1917;
+        border: 2px solid var(--scrollbar-track, #1a1a1a);
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #57534e; /* stone-600 */
+        background: var(--scrollbar-thumb-hover, #525252);
+      }
+
+      /* Transition for theme changes */
+      body, .bg-surface, .bg-surface-alt, .bg-surface-elevated,
+      .text-foreground, .text-foreground-muted, .text-foreground-subtle,
+      .border-border, .border-border-subtle {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
       }
     </style>
   <script type="importmap">
@@ -41,7 +73,8 @@
 }
 </script>
 </head>
-  <body class="bg-stone-900 text-stone-300 antialiased overflow-hidden selection:bg-amber-900 selection:text-amber-100">
+  <body class="bg-surface text-foreground antialiased overflow-hidden selection:bg-accent-muted selection:text-accent">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

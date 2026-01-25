@@ -1,0 +1,13 @@
+# Ambiente
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+
+# Screenshots temporarios
+screenshots/
+
+# Baselines sao commitados (referencia)
+# baselines/

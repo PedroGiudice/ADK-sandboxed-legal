@@ -4,6 +4,8 @@ export enum AgentRole {
   ASSISTANT = 'ASSISTANT'
 }
 
+export type Theme = 'dark' | 'light' | 'high-contrast' | 'ocean';
+
 export type OutputStyle = 'concise' | 'normal' | 'verbose';
 
 export type MessagePartType = 'text' | 'thought' | 'tool_call' | 'tool_result' | 'bash' | 'file_op';
@@ -55,4 +57,5 @@ export interface RuntimeConfig {
   enableGrounding: boolean;
   securityFilterLevel: 'low' | 'medium' | 'high';
   outputStyle: OutputStyle;
+  geminiApiKey: string; // Stored securely, never logged
 }

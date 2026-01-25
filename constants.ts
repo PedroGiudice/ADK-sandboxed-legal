@@ -1,38 +1,116 @@
-import { AgentProfile, RuntimeConfig } from './types';
+import { AgentProfile, RuntimeConfig, Theme } from './types';
+import themesMetadata from './themes/themes-metadata.json';
+
+// Theme configuration from TOML-generated JSON
+export const THEME_CONFIG: Record<string, { name: string; description: string }> = themesMetadata.themes;
+export const DEFAULT_THEME = themesMetadata.defaultTheme as Theme;
+export const AVAILABLE_THEMES = Object.keys(THEME_CONFIG) as Theme[];
+
+// Storage keys
+const THEME_STORAGE_KEY = 'adk_theme_v1';
+const FONT_STORAGE_KEY = 'adk_font_v1';
+const MESSAGES_STORAGE_KEY = 'adk_chat_history_v1';
+
+// Common fonts available on most Linux systems
+export const COMMON_FONTS = [
+  { name: 'System Default', value: 'system-ui, -apple-system, sans-serif' },
+  { name: 'Monospace', value: 'ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace' },
+  { name: 'JetBrains Mono', value: '"JetBrains Mono", monospace' },
+  { name: 'Fira Code', value: '"Fira Code", monospace' },
+  { name: 'Ubuntu Mono', value: '"Ubuntu Mono", monospace' },
+  { name: 'DejaVu Sans Mono', value: '"DejaVu Sans Mono", monospace' },
+  { name: 'Liberation Mono', value: '"Liberation Mono", monospace' },
+  { name: 'Noto Sans', value: '"Noto Sans", sans-serif' },
+  { name: 'Roboto', value: '"Roboto", sans-serif' },
+  { name: 'Inter', value: '"Inter", sans-serif' },
+];
+
+export const DEFAULT_FONT = COMMON_FONTS[1].value; // Monospace as default
+
+export const loadTheme = (): Theme => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved && AVAILABLE_THEMES.includes(saved as Theme)) {
+      return saved as Theme;
+    }
+  }
+  return DEFAULT_THEME;
+};
+
+export const saveTheme = (theme: Theme): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }
+};
+
+// Font management
+export const loadFont = (): string => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem(FONT_STORAGE_KEY) || DEFAULT_FONT;
+  }
+  return DEFAULT_FONT;
+};
+
+export const saveFont = (font: string): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(FONT_STORAGE_KEY, font);
+    document.documentElement.style.setProperty('--font-primary', font);
+  }
+};
+
+// Messages management
+export const clearMessages = (): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(MESSAGES_STORAGE_KEY);
+  }
+};
 
 export const AVAILABLE_AGENTS: AgentProfile[] = [
   {
-    id: 'agent-contract',
-    name: 'Contract Analysis Agent',
-    specialization: 'Contract Law',
-    description: 'Analyzes contractual obligations and validity.',
-    version: '1.0',
+    id: 'agent-legal-pipeline',
+    name: 'Pipeline Juridica Dialetica',
+    specialization: 'Raciocinio Juridico',
+    description: 'Pipeline completa com debates adversariais (verificacao, construcao, redacao).',
+    version: '4.0',
     status: 'active',
   },
   {
-    id: 'agent-caselaw',
-    name: 'Case Law Research Agent',
-    specialization: 'Legal Research',
-    description: 'Retrieves and summarizes relevant case law.',
+    id: 'agent-jurisprudence',
+    name: 'Pesquisa de Jurisprudencia',
+    specialization: 'Pesquisa Legal',
+    description: 'Busca iterativa em tribunais brasileiros (STJ, STF, TJs).',
     version: '1.0',
     status: 'active',
   },
-  {
-    id: 'agent-statutory',
-    name: 'Statutory Interpretation Agent',
-    specialization: 'Statutory Law',
-    description: 'Interprets legislative text and statutes.',
-    version: '1.0',
-    status: 'active',
-  }
 ];
 
+// API Key is stored separately for security
+const SECURE_KEY_STORAGE = 'adk_secure_key_v1';
+
+const loadSecureKey = (): string => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem(SECURE_KEY_STORAGE) || '';
+  }
+  return '';
+};
+
+export const saveSecureKey = (key: string): void => {
+  if (typeof window !== 'undefined') {
+    if (key) {
+      localStorage.setItem(SECURE_KEY_STORAGE, key);
+    } else {
+      localStorage.removeItem(SECURE_KEY_STORAGE);
+    }
+  }
+};
+
 export const DEFAULT_CONFIG: RuntimeConfig = {
-  apiUrl: 'https://api.google.adk.example/v1',
+  apiUrl: 'https://generativelanguage.googleapis.com/v1beta',
   contextWindow: 128000,
   temperature: 0.2,
   topK: 40,
   enableGrounding: true,
   securityFilterLevel: 'high',
   outputStyle: 'normal',
+  geminiApiKey: loadSecureKey(),
 };

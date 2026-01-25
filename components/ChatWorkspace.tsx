@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AgentProfile, Message, AgentRole, Attachment, OutputStyle, MessagePart } from '../types';
-import { 
-  SendIcon, PaperclipIcon, XIcon, AttachmentIcon, 
+import {
+  SendIcon, PaperclipIcon, XIcon, AttachmentIcon,
   CopyIcon, CheckIcon, TrashIcon, GeoSpinner,
-  TerminalIcon, WrenchIcon, CodeIcon, BookOpenIcon, PlayIcon, ChevronDownIcon
+  TerminalIcon, WrenchIcon, CodeIcon, BookOpenIcon, PlayIcon, ChevronDownIcon, SettingsIcon
 } from './Icons';
 
 type ViewMode = 'developer' | 'client';
@@ -53,7 +53,7 @@ const getClientIntent = (part: MessagePart): { icon: React.ReactNode, text: stri
  */
 const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewMode: ViewMode }> = ({ parts, content, viewMode }) => {
   if (!parts || parts.length === 0) {
-    return <div className="whitespace-pre-wrap font-sans font-light text-stone-300 leading-relaxed">{content}</div>;
+    return <div className="whitespace-pre-wrap font-sans font-light text-foreground leading-relaxed">{content}</div>;
   }
 
   return (
@@ -67,19 +67,19 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewM
             // If text, render normally. If mapped intent exists, render the "Status Pill".
             if (part.type === 'text') {
                 return (
-                    <div key={idx} className="whitespace-pre-wrap font-serif text-stone-300 leading-7 my-2 text-sm">
+                    <div key={idx} className="whitespace-pre-wrap font-serif text-foreground leading-7 my-2 text-sm">
                         {part.content}
                     </div>
                 );
             }
-            
+
             if (intent) {
                 return (
-                    <div key={idx} className="flex items-center gap-3 py-2 px-3 my-1 rounded-md bg-stone-800/20 border border-stone-800/40">
-                        <div className="text-amber-600/70">{intent.icon}</div>
-                        <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">{intent.text}</span>
+                    <div key={idx} className="flex items-center gap-3 py-2 px-3 my-1 rounded-md bg-surface-elevated/50 border border-border-subtle">
+                        <div className="text-accent/70">{intent.icon}</div>
+                        <span className="text-xs font-medium text-foreground-subtle uppercase tracking-wide">{intent.text}</span>
                         {/* Simulation of progress/success tick */}
-                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500/50"></div>
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-success/50"></div>
                     </div>
                 );
             }
@@ -90,19 +90,19 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewM
         switch (part.type) {
           case 'text':
             return (
-                <div key={idx} className="whitespace-pre-wrap font-sans font-light text-stone-300 leading-relaxed my-1">
+                <div key={idx} className="whitespace-pre-wrap font-sans font-light text-foreground leading-relaxed my-1">
                     {part.content}
                 </div>
             );
-          
+
           case 'thought':
             return (
-              <details key={idx} className="group border-l-[2px] border-stone-800 pl-3 py-1 my-2 open:bg-stone-900/30 open:rounded-r-sm transition-all">
-                <summary className="text-[10px] font-bold text-stone-600 uppercase tracking-widest cursor-pointer select-none group-hover:text-stone-400 flex items-center gap-2 outline-none">
+              <details key={idx} className="group border-l-[2px] border-border pl-3 py-1 my-2 open:bg-surface-elevated/30 open:rounded-r-sm transition-all">
+                <summary className="text-[10px] font-bold text-foreground-subtle uppercase tracking-widest cursor-pointer select-none group-hover:text-foreground-muted flex items-center gap-2 outline-none">
                   <ChevronDownIcon className="w-3 h-3 transition-transform duration-200 group-open:rotate-180 opacity-50" />
                   <span>Reasoning_Chain</span>
                 </summary>
-                <div className="mt-2 text-[11px] text-stone-500 leading-relaxed font-mono italic pl-5 border-t border-stone-800/30 pt-2 opacity-80">
+                <div className="mt-2 text-[11px] text-foreground-subtle leading-relaxed font-mono italic pl-5 border-t border-border-subtle pt-2 opacity-80">
                   {part.content}
                 </div>
               </details>
@@ -110,22 +110,22 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewM
 
           case 'bash':
             return (
-              <div key={idx} className="my-3 rounded-sm overflow-hidden border border-stone-800 bg-[#0a0a0a] shadow-md group">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-[#141414] border-b border-stone-800">
+              <div key={idx} className="my-3 rounded-sm overflow-hidden border border-border bg-surface-alt shadow-md group">
+                <div className="flex items-center justify-between px-3 py-1.5 bg-surface-elevated border-b border-border">
                   <div className="flex items-center gap-2">
-                      <TerminalIcon className="w-3 h-3 text-stone-500" />
-                      <span className="text-[9px] font-bold text-stone-500 uppercase tracking-widest">shell_exec</span>
+                      <TerminalIcon className="w-3 h-3 text-foreground-subtle" />
+                      <span className="text-[9px] font-bold text-foreground-subtle uppercase tracking-widest">shell_exec</span>
                   </div>
                   {part.metadata?.exitCode !== undefined && (
-                     <span className={`text-[9px] font-mono px-1.5 rounded-sm ${part.metadata.exitCode === 0 ? 'text-emerald-500/80 bg-emerald-900/10' : 'text-red-500/80 bg-red-900/10'}`}>
+                     <span className={`text-[9px] font-mono px-1.5 rounded-sm ${part.metadata.exitCode === 0 ? 'text-success/80 bg-success/10' : 'text-error/80 bg-error/10'}`}>
                        code:{part.metadata.exitCode}
                      </span>
                   )}
                 </div>
                 <div className="p-3 font-mono text-[11px] overflow-x-auto custom-scrollbar">
                   <div className="flex gap-2">
-                    <span className="text-emerald-600/80 select-none">$</span>
-                    <span className="text-stone-300">{part.content}</span>
+                    <span className="text-success/80 select-none">$</span>
+                    <span className="text-foreground">{part.content}</span>
                   </div>
                 </div>
               </div>
@@ -133,19 +133,19 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewM
 
           case 'tool_call':
             return (
-              <div key={idx} className="my-3 rounded-sm border border-amber-900/20 bg-[#161210] overflow-hidden relative">
-                  <div className="absolute top-0 left-0 w-0.5 h-full bg-amber-900/40"></div>
-                  <div className="flex items-center gap-3 px-3 py-2 bg-amber-950/5 border-b border-amber-900/10">
-                    <div className="p-1 rounded-sm bg-amber-900/10 border border-amber-900/20">
-                         <WrenchIcon className="w-3 h-3 text-amber-600" />
+              <div key={idx} className="my-3 rounded-sm border border-accent/20 bg-accent-muted/30 overflow-hidden relative">
+                  <div className="absolute top-0 left-0 w-0.5 h-full bg-accent/40"></div>
+                  <div className="flex items-center gap-3 px-3 py-2 bg-accent-muted/10 border-b border-accent/10">
+                    <div className="p-1 rounded-sm bg-accent/10 border border-accent/20">
+                         <WrenchIcon className="w-3 h-3 text-accent" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-amber-700/70 uppercase tracking-widest leading-none">Tool_Use</span>
-                        <span className="text-[10px] font-mono text-amber-600/90 leading-tight mt-0.5">{part.metadata?.toolName}</span>
+                        <span className="text-[9px] font-bold text-accent/70 uppercase tracking-widest leading-none">Tool_Use</span>
+                        <span className="text-[10px] font-mono text-accent/90 leading-tight mt-0.5">{part.metadata?.toolName}</span>
                     </div>
                   </div>
                   <div className="p-3">
-                     <div className="text-[10px] font-mono text-amber-500/80 whitespace-pre-wrap break-all bg-black/20 p-2 rounded-sm border border-amber-900/10">
+                     <div className="text-[10px] font-mono text-accent/80 whitespace-pre-wrap break-all bg-surface-alt/50 p-2 rounded-sm border border-accent/10">
                         {part.content}
                      </div>
                   </div>
@@ -156,33 +156,33 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewM
              const isWrite = part.content.toLowerCase().includes('write');
             return (
               <div key={idx} className={`my-2 flex items-center gap-3 p-2 rounded-sm border ${
-                  isWrite 
-                    ? 'bg-[#101218] border-indigo-900/30' 
-                    : 'bg-[#121212] border-stone-800'
+                  isWrite
+                    ? 'bg-indigo-500/5 border-indigo-500/20'
+                    : 'bg-surface-elevated border-border'
               }`}>
                 <div className={`p-1.5 rounded-sm border shrink-0 ${
-                    isWrite 
-                        ? 'bg-indigo-900/10 border-indigo-900/20' 
-                        : 'bg-stone-800/30 border-stone-800'
+                    isWrite
+                        ? 'bg-indigo-500/10 border-indigo-500/20'
+                        : 'bg-surface-elevated border-border'
                 }`}>
-                  <BookOpenIcon className={`w-3.5 h-3.5 ${isWrite ? 'text-indigo-400' : 'text-stone-500'}`} />
+                  <BookOpenIcon className={`w-3.5 h-3.5 ${isWrite ? 'text-indigo-400' : 'text-foreground-subtle'}`} />
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                    <div className="flex items-center justify-between">
-                      <span className={`text-[9px] font-bold uppercase tracking-widest ${isWrite ? 'text-indigo-500/70' : 'text-stone-600'}`}>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest ${isWrite ? 'text-indigo-500/70' : 'text-foreground-subtle'}`}>
                           {isWrite ? 'Write_Stream' : 'Read_Stream'}
                       </span>
                    </div>
-                   <div className="text-[11px] font-mono text-stone-400 truncate mt-0.5" title={part.metadata?.filePath}>
+                   <div className="text-[11px] font-mono text-foreground-muted truncate mt-0.5" title={part.metadata?.filePath}>
                       {part.metadata?.filePath || './unknown'}
                    </div>
                 </div>
 
                 <div className={`px-2 py-1 rounded-sm text-[9px] font-bold font-mono border uppercase ${
-                     isWrite 
-                     ? 'bg-indigo-500/5 border-indigo-500/10 text-indigo-500' 
-                     : 'bg-stone-800/30 border-stone-800 text-stone-500'
+                     isWrite
+                     ? 'bg-indigo-500/5 border-indigo-500/10 text-indigo-500'
+                     : 'bg-surface-elevated border-border text-foreground-subtle'
                 }`}>
                     {isWrite ? 'W+' : 'R'}
                 </div>
@@ -202,9 +202,10 @@ interface ChatWorkspaceProps {
   messages: Message[];
   onSendMessage: (content: string, attachments: Attachment[], style: OutputStyle) => void;
   isLoading?: boolean;
+  onOpenConfig?: () => void;
 }
 
-const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, onSendMessage, isLoading = false }) => {
+const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, onSendMessage, isLoading = false, onOpenConfig }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('developer');
   
   const [inputValue, setInputValue] = useState('');
@@ -291,28 +292,28 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-stone-900 relative">
-      
+    <div className="flex-1 flex flex-col bg-surface relative">
+
       {/* Top Bar with Mode Toggle */}
-      <div className="h-16 flex items-center justify-between px-8 border-b border-stone-800 bg-stone-900/95 backdrop-blur-sm z-10">
+      <div className="h-16 flex items-center justify-between px-8 border-b border-border bg-surface/95 backdrop-blur-sm z-10">
          <div className="flex flex-col">
-            <h1 className="text-stone-200 font-medium tracking-wide text-sm flex items-center gap-2">
+            <h1 className="text-foreground font-medium tracking-wide text-sm flex items-center gap-2">
                 {activeAgent.name}
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
-                <span className={`w-1 h-1 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span>
-                <p className="text-[9px] text-stone-600 font-mono uppercase tracking-tighter">Session ID: 0x82A1</p>
+                <span className={`w-1 h-1 rounded-full ${isLoading ? 'bg-warning animate-pulse' : 'bg-success'}`}></span>
+                <p className="text-[9px] text-foreground-subtle font-mono uppercase tracking-tighter">Session ID: 0x82A1</p>
             </div>
          </div>
 
          {/* Center: Mode Toggle */}
-         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-stone-950/50 p-1 rounded-full border border-stone-800">
+         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-surface-alt/50 p-1 rounded-full border border-border">
              <button
                 onClick={() => setViewMode('developer')}
                 className={`px-3 py-1 text-[9px] uppercase font-bold tracking-wider rounded-full transition-all ${
-                    viewMode === 'developer' 
-                    ? 'bg-stone-800 text-stone-200 shadow-sm' 
-                    : 'text-stone-600 hover:text-stone-400'
+                    viewMode === 'developer'
+                    ? 'bg-surface-elevated text-foreground shadow-sm'
+                    : 'text-foreground-subtle hover:text-foreground-muted'
                 }`}
              >
                 Dev_Mode
@@ -320,9 +321,9 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
              <button
                 onClick={() => setViewMode('client')}
                 className={`px-3 py-1 text-[9px] uppercase font-bold tracking-wider rounded-full transition-all ${
-                    viewMode === 'client' 
-                    ? 'bg-amber-900/20 text-amber-500 shadow-sm' 
-                    : 'text-stone-600 hover:text-stone-400'
+                    viewMode === 'client'
+                    ? 'bg-accent-muted text-accent shadow-sm'
+                    : 'text-foreground-subtle hover:text-foreground-muted'
                 }`}
              >
                 Client_View
@@ -330,25 +331,33 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
          </div>
 
          <div className="flex items-center gap-4">
-            <GeoSpinner className="w-5 h-5" />
             {isLoading && (
-                <div className="flex items-center gap-2 text-amber-600/80 animate-pulse">
+                <div className="flex items-center gap-2 text-accent/80 animate-pulse">
                     <span className="text-[10px] font-mono tracking-widest">THINKING_STREAM</span>
                 </div>
+            )}
+            {onOpenConfig && (
+                <button
+                    onClick={onOpenConfig}
+                    className="p-2 text-foreground-subtle hover:text-accent hover:bg-surface-elevated/50 rounded-sm transition-all"
+                    title="Configuracoes"
+                >
+                    <SettingsIcon className="w-5 h-5" />
+                </button>
             )}
          </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth bg-stone-900 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth bg-surface custom-scrollbar">
         {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-stone-600 select-none">
+            <div className="h-full flex flex-col items-center justify-center text-foreground-subtle select-none">
                 {isLoading ? (
                     <GeoSpinner className="w-10 h-10 mb-4" />
                 ) : (
                     <div className="flex flex-col items-center gap-2 opacity-20">
-                        <span className="text-4xl font-mono text-stone-500">://</span>
-                        <p className="text-[10px] font-mono tracking-[0.2em] text-stone-500 uppercase">System_Standby</p>
+                        <span className="text-4xl font-mono text-foreground-subtle">://</span>
+                        <p className="text-[10px] font-mono tracking-[0.2em] text-foreground-subtle uppercase">System_Standby</p>
                     </div>
                 )}
             </div>
@@ -361,15 +370,15 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                     className={`flex flex-col w-full max-w-5xl mx-auto group ${isUser ? 'items-end' : 'items-start'}`}
                 >
                     <div className={`relative max-w-[85%] ${isUser ? 'pl-16' : 'pr-16'}`}>
-                        
+
                         {/* Header Label */}
                         <div className={`flex items-center gap-2 mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
                             <span className={`text-[9px] font-bold uppercase tracking-[0.15em] ${
-                                isUser ? 'text-amber-700/80' : 'text-stone-600'
+                                isUser ? 'text-accent/80' : 'text-foreground-subtle'
                             }`}>
                                 {isUser ? 'CLIENT_INPUT' : (viewMode === 'client' ? 'LEGAL_COUNSEL' : 'ADK_OUTPUT')}
                             </span>
-                            <span className="text-[9px] text-stone-700 font-mono">
+                            <span className="text-[9px] text-foreground-subtle font-mono">
                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </span>
                         </div>
@@ -377,22 +386,22 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                         {/* Content Bubble */}
                         <div className={`
                             relative p-5 text-[13px] leading-relaxed transition-all duration-300
-                            ${isUser 
-                                ? 'bg-[#1e1c1b] border border-stone-800/60 rounded-sm text-stone-300' 
-                                : 'bg-[#181d24] border border-blue-900/10 rounded-sm text-stone-300'
+                            ${isUser
+                                ? 'bg-surface-elevated border border-border rounded-sm text-foreground'
+                                : 'bg-surface-alt border border-border-subtle rounded-sm text-foreground'
                             }
                         `}>
                             {isUser ? (
-                              <div className="whitespace-pre-wrap font-serif text-stone-300">{msg.content}</div>
+                              <div className="whitespace-pre-wrap font-serif text-foreground">{msg.content}</div>
                             ) : (
                               <AgentMessageBody parts={msg.parts} content={msg.content} viewMode={viewMode} />
                             )}
 
                             {/* Attachments within message */}
                             {msg.attachments && msg.attachments.length > 0 && (
-                                <div className="mt-4 pt-3 border-t border-stone-800/40 flex flex-wrap gap-2">
+                                <div className="mt-4 pt-3 border-t border-border-subtle flex flex-wrap gap-2">
                                     {msg.attachments.map(att => (
-                                    <div key={att.id} className="flex items-center gap-2 p-1.5 bg-black/20 border border-stone-800/30 rounded-sm text-[10px] text-stone-500 font-mono">
+                                    <div key={att.id} className="flex items-center gap-2 p-1.5 bg-surface-alt/50 border border-border-subtle rounded-sm text-[10px] text-foreground-subtle font-mono">
                                         <AttachmentIcon className="w-2.5 h-2.5" />
                                         <span className="max-w-[120px] truncate">{att.name}</span>
                                     </div>
@@ -401,11 +410,11 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                             )}
 
                             {/* Hover Actions (Copy) */}
-                            <button 
+                            <button
                                 onClick={() => handleCopy(msg.content, msg.id)}
                                 className={`
                                     absolute top-2 right-2 p-1 rounded-sm opacity-0 group-hover:opacity-100 transition-all
-                                    text-stone-600 hover:text-amber-500 hover:bg-stone-800/80
+                                    text-foreground-subtle hover:text-accent hover:bg-surface-elevated/80
                                 `}
                                 title="Copy Content"
                             >
@@ -422,9 +431,9 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
              <div className="flex flex-col w-full max-w-5xl mx-auto items-start animate-in fade-in slide-in-from-bottom-2 duration-500">
                  <div className="pr-16">
                      <div className="flex items-center gap-2 mb-2">
-                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-600/50">PROCESSING</span>
+                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-accent/50">PROCESSING</span>
                      </div>
-                     <div className="bg-[#181d24] border border-blue-900/10 rounded-sm p-4 w-12 flex items-center justify-center">
+                     <div className="bg-surface-alt border border-border-subtle rounded-sm p-4 w-12 flex items-center justify-center">
                          <GeoSpinner className="w-4 h-4" />
                      </div>
                  </div>
@@ -434,43 +443,43 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
       </div>
 
       {/* Input Area */}
-      <div className="bg-stone-900 p-6 border-t border-stone-800/60">
+      <div className="bg-surface p-6 border-t border-border">
         <div className="max-w-4xl mx-auto space-y-4">
-            
+
             {/* Attachment Bar */}
             {(attachments.length > 0 || isUploading) && (
-              <div className="flex flex-col gap-2 p-3 bg-stone-950/20 border border-stone-800/60 rounded-sm animate-in slide-in-from-bottom-1">
+              <div className="flex flex-col gap-2 p-3 bg-surface-alt/50 border border-border rounded-sm animate-in slide-in-from-bottom-1">
                 <div className="flex items-center justify-between">
-                    <span className="text-[9px] uppercase font-bold text-stone-600 tracking-wider">Payload Cache</span>
+                    <span className="text-[9px] uppercase font-bold text-foreground-subtle tracking-wider">Payload Cache</span>
                     {attachments.length > 0 && (
-                        <button 
+                        <button
                             onClick={removeAllAttachments}
-                            className="text-[9px] uppercase font-bold text-red-900 hover:text-red-500 flex items-center gap-1 transition-colors"
+                            className="text-[9px] uppercase font-bold text-error/70 hover:text-error flex items-center gap-1 transition-colors"
                         >
                             <TrashIcon className="w-2.5 h-2.5" />
                             Purge_All
                         </button>
                     )}
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                     {attachments.map(att => (
-                        <div key={att.id} className="flex items-center gap-2 px-2 py-1 bg-stone-800 border border-stone-700/40 rounded-sm text-[10px] text-stone-400 group">
+                        <div key={att.id} className="flex items-center gap-2 px-2 py-1 bg-surface-elevated border border-border rounded-sm text-[10px] text-foreground-muted group">
                             <span className="max-w-[150px] truncate font-mono">{att.name}</span>
-                            <button onClick={() => removeAttachment(att.id)} className="text-stone-600 hover:text-red-600 transition-colors">
+                            <button onClick={() => removeAttachment(att.id)} className="text-foreground-subtle hover:text-error transition-colors">
                                 <XIcon className="w-2.5 h-2.5" />
                             </button>
                         </div>
                     ))}
                     {isUploading && (
                         <div className="flex flex-col w-full gap-1.5 mt-1">
-                            <div className="flex justify-between text-[9px] font-mono text-amber-700">
+                            <div className="flex justify-between text-[9px] font-mono text-accent">
                                 <span>UPLOADING_CONTEXT</span>
                                 <span>{uploadProgress}%</span>
                             </div>
-                            <div className="w-full h-0.5 bg-stone-800 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-amber-600 transition-all duration-300" 
+                            <div className="w-full h-0.5 bg-surface-elevated rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-accent transition-all duration-300"
                                     style={{ width: `${uploadProgress}%` }}
                                 />
                             </div>
@@ -482,8 +491,8 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
 
             {/* Input Component */}
             <div className={`
-                relative bg-stone-800/20 border transition-all duration-300 rounded-sm
-                ${isLoading ? 'border-stone-800/20' : 'border-stone-800/80 focus-within:border-stone-600 focus-within:bg-stone-800/30'}
+                relative bg-surface-elevated/50 border transition-all duration-300 rounded-sm
+                ${isLoading ? 'border-border-subtle' : 'border-border focus-within:border-accent/50 focus-within:bg-surface-elevated/70'}
             `}>
                 <textarea
                     value={inputValue}
@@ -491,7 +500,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                     onKeyDown={handleKeyDown}
                     disabled={isLoading}
                     placeholder={isLoading ? "System is analyzing..." : "Enter legal inquiry..."}
-                    className="w-full p-4 bg-transparent text-stone-300 placeholder-stone-700 focus:outline-none resize-none min-h-[50px] max-h-[180px] text-[13px] font-mono leading-relaxed disabled:cursor-not-allowed"
+                    className="w-full p-4 bg-transparent text-foreground placeholder-foreground-subtle focus:outline-none resize-none min-h-[50px] max-h-[180px] text-[13px] font-mono leading-relaxed disabled:cursor-not-allowed"
                     rows={1}
                 />
                 <div className="absolute right-2 bottom-2">
@@ -500,9 +509,9 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                         disabled={(!inputValue.trim() && attachments.length === 0) || isLoading}
                         className={`
                             p-2 rounded-sm transition-all duration-200
-                            ${(!inputValue.trim() && attachments.length === 0) || isLoading 
-                                ? 'text-stone-800' 
-                                : 'text-stone-900 bg-amber-600 hover:bg-amber-500'}
+                            ${(!inputValue.trim() && attachments.length === 0) || isLoading
+                                ? 'text-foreground-subtle'
+                                : 'text-surface bg-accent hover:bg-accent-hover'}
                         `}
                     >
                         <SendIcon className="w-3.5 h-3.5" />
@@ -512,13 +521,13 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
 
             {/* Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
-              
+
               <div className="flex items-center gap-2">
                 <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} multiple disabled={isLoading} />
-                <button 
+                <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isLoading}
-                  className="flex items-center gap-2 px-2.5 py-1 text-[10px] uppercase font-bold tracking-widest text-stone-500 hover:text-stone-300 bg-transparent border border-stone-800 hover:border-stone-700 rounded-sm transition-all disabled:opacity-20"
+                  className="flex items-center gap-2 px-2.5 py-1 text-[10px] uppercase font-bold tracking-widest text-foreground-subtle hover:text-foreground bg-transparent border border-border hover:border-accent/50 rounded-sm transition-all disabled:opacity-20"
                 >
                   <PaperclipIcon className="w-3 h-3" />
                   <span>Attach_Context</span>
@@ -526,7 +535,7 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
               </div>
 
               {/* Style Selection */}
-              <div className="flex items-center bg-black/20 rounded-sm border border-stone-800 p-0.5">
+              <div className="flex items-center bg-surface-alt/50 rounded-sm border border-border p-0.5">
                  {(['concise', 'normal', 'verbose'] as OutputStyle[]).map((style) => (
                     <button
                       key={style}
@@ -534,9 +543,9 @@ const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, on
                       disabled={isLoading}
                       className={`
                         px-3 py-1 text-[9px] uppercase font-bold tracking-[0.2em] rounded-sm transition-all
-                        ${outputStyle === style 
-                          ? 'bg-stone-800 text-amber-500 border border-stone-700/50' 
-                          : 'text-stone-600 hover:text-stone-400'
+                        ${outputStyle === style
+                          ? 'bg-surface-elevated text-accent border border-border'
+                          : 'text-foreground-subtle hover:text-foreground-muted'
                         }
                       `}
                     >

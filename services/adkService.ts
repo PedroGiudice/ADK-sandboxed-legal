@@ -11,13 +11,20 @@ import { GoogleGenAI } from "@google/genai";
 
 /** Fix: Implementation of sendPromptToAgent using the latest Google GenAI SDK */
 export const sendPromptToAgent = async (
-  prompt: string, 
-  agent: AgentProfile, 
+  prompt: string,
+  agent: AgentProfile,
   config: RuntimeConfig
 ): Promise<string> => {
-  
+
+  // Use API key from config (user-provided) or fallback to env
+  const apiKey = config.geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+
+  if (!apiKey) {
+    throw new Error('API Key not configured. Please add your Gemini API Key in Settings.');
+  }
+
   // Use named parameter to initialize SDK
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
   
   // Select 'gemini-3-pro-preview' for complex legal reasoning tasks
   const modelName = 'gemini-3-pro-preview';

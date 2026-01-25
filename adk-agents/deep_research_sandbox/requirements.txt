@@ -1,0 +1,17 @@
+# Deep Research Agent - Dependencies
+# Python 3.10+ required
+
+# Google ADK (Agent Development Kit)
+google-adk>=0.3.0
+
+# Google GenAI SDK
+google-genai>=1.0.0
+
+# Retry logic with exponential backoff
+tenacity>=8.2.0
+
+# Environment variable management (optional)
+python-dotenv>=1.0.0
+
+# For JSON schema validation (optional)
+jsonschema>=4.17.0

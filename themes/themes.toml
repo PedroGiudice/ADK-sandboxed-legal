@@ -1,0 +1,103 @@
+[meta]
+version = "1.0"
+default_theme = "dark"
+
+[themes.dark]
+name = "Dark"
+description = "Tema escuro com bom contraste"
+
+  [themes.dark.colors]
+  surface = "#0f0f0f"
+  surface_alt = "#1a1a1a"
+  surface_elevated = "#262626"
+  foreground = "#f5f5f5"
+  foreground_muted = "#d4d4d4"
+  foreground_subtle = "#a3a3a3"
+  border = "#525252"
+  border_subtle = "#404040"
+  accent = "#fbbf24"
+  accent_hover = "#fcd34d"
+  accent_muted = "rgba(251, 191, 36, 0.2)"
+  success = "#4ade80"
+  warning = "#fbbf24"
+  error = "#f87171"
+
+  [themes.dark.scrollbar]
+  track = "#0f0f0f"
+  thumb = "#525252"
+  thumb_hover = "#737373"
+
+[themes.light]
+name = "Light"
+description = "Tema claro para ambientes iluminados"
+
+  [themes.light.colors]
+  surface = "#ffffff"
+  surface_alt = "#f5f5f5"
+  surface_elevated = "#e5e5e5"
+  foreground = "#171717"
+  foreground_muted = "#404040"
+  foreground_subtle = "#737373"
+  border = "#d4d4d4"
+  border_subtle = "#e5e5e5"
+  accent = "#b45309"
+  accent_hover = "#92400e"
+  accent_muted = "rgba(180, 83, 9, 0.15)"
+  success = "#16a34a"
+  warning = "#ca8a04"
+  error = "#dc2626"
+
+  [themes.light.scrollbar]
+  track = "#f5f5f5"
+  thumb = "#a3a3a3"
+  thumb_hover = "#737373"
+
+[themes.high-contrast]
+name = "High Contrast"
+description = "Maximo contraste para acessibilidade"
+
+  [themes.high-contrast.colors]
+  surface = "#000000"
+  surface_alt = "#0a0a0a"
+  surface_elevated = "#171717"
+  foreground = "#ffffff"
+  foreground_muted = "#fafafa"
+  foreground_subtle = "#e5e5e5"
+  border = "#ffffff"
+  border_subtle = "#a3a3a3"
+  accent = "#facc15"
+  accent_hover = "#fef08a"
+  accent_muted = "rgba(250, 204, 21, 0.3)"
+  success = "#86efac"
+  warning = "#fde047"
+  error = "#fca5a5"
+
+  [themes.high-contrast.scrollbar]
+  track = "#000000"
+  thumb = "#a3a3a3"
+  thumb_hover = "#d4d4d4"
+
+[themes.ocean]
+name = "Ocean"
+description = "Tema azul profundo"
+
+  [themes.ocean.colors]
+  surface = "#0c1829"
+  surface_alt = "#071018"
+  surface_elevated = "#1e3a5f"
+  foreground = "#e2e8f0"
+  foreground_muted = "#94a3b8"
+  foreground_subtle = "#64748b"
+  border = "#334155"
+  border_subtle = "#1e293b"
+  accent = "#38bdf8"
+  accent_hover = "#7dd3fc"
+  accent_muted = "rgba(56, 189, 248, 0.2)"
+  success = "#34d399"
+  warning = "#fbbf24"
+  error = "#fb7185"
+
+  [themes.ocean.scrollbar]
+  track = "#0c1829"
+  thumb = "#334155"
+  thumb_hover = "#475569"
