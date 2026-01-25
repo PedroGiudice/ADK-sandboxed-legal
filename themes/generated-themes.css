@@ -1,0 +1,81 @@
+/* Auto-generated from themes.toml - DO NOT EDIT */
+
+.theme-dark {
+  --color-surface: #0f0f0f;
+  --color-surface-alt: #1a1a1a;
+  --color-surface-elevated: #262626;
+  --color-foreground: #f5f5f5;
+  --color-foreground-muted: #d4d4d4;
+  --color-foreground-subtle: #a3a3a3;
+  --color-border: #525252;
+  --color-border-subtle: #404040;
+  --color-accent: #fbbf24;
+  --color-accent-hover: #fcd34d;
+  --color-accent-muted: rgba(251, 191, 36, 0.2);
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --scrollbar-track: #0f0f0f;
+  --scrollbar-thumb: #525252;
+  --scrollbar-thumb-hover: #737373;
+}
+
+.theme-light {
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f5;
+  --color-surface-elevated: #e5e5e5;
+  --color-foreground: #171717;
+  --color-foreground-muted: #404040;
+  --color-foreground-subtle: #737373;
+  --color-border: #d4d4d4;
+  --color-border-subtle: #e5e5e5;
+  --color-accent: #b45309;
+  --color-accent-hover: #92400e;
+  --color-accent-muted: rgba(180, 83, 9, 0.15);
+  --color-success: #16a34a;
+  --color-warning: #ca8a04;
+  --color-error: #dc2626;
+  --scrollbar-track: #f5f5f5;
+  --scrollbar-thumb: #a3a3a3;
+  --scrollbar-thumb-hover: #737373;
+}
+
+.theme-high-contrast {
+  --color-surface: #000000;
+  --color-surface-alt: #0a0a0a;
+  --color-surface-elevated: #171717;
+  --color-foreground: #ffffff;
+  --color-foreground-muted: #fafafa;
+  --color-foreground-subtle: #e5e5e5;
+  --color-border: #ffffff;
+  --color-border-subtle: #a3a3a3;
+  --color-accent: #facc15;
+  --color-accent-hover: #fef08a;
+  --color-accent-muted: rgba(250, 204, 21, 0.3);
+  --color-success: #86efac;
+  --color-warning: #fde047;
+  --color-error: #fca5a5;
+  --scrollbar-track: #000000;
+  --scrollbar-thumb: #a3a3a3;
+  --scrollbar-thumb-hover: #d4d4d4;
+}
+
+.theme-ocean {
+  --color-surface: #0c1829;
+  --color-surface-alt: #071018;
+  --color-surface-elevated: #1e3a5f;
+  --color-foreground: #e2e8f0;
+  --color-foreground-muted: #94a3b8;
+  --color-foreground-subtle: #64748b;
+  --color-border: #334155;
+  --color-border-subtle: #1e293b;
+  --color-accent: #38bdf8;
+  --color-accent-hover: #7dd3fc;
+  --color-accent-muted: rgba(56, 189, 248, 0.2);
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #fb7185;
+  --scrollbar-track: #0c1829;
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
+}

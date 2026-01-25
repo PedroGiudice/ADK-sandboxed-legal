@@ -1,0 +1,52 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Legal ADK Sandbox",
+  "version": "0.1.0",
+  "identifier": "com.legaladk.sandbox",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "bun run dev",
+    "beforeBuildCommand": "bun run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Legal ADK Sandbox",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM0QjIxRDRDMkE2MDMxMzQKUldRME1XQXFUQjJ5eE9aL25iUm4zeUhJdHBORjlDNnlxVDJFNW9Dc290MlpSTzRmNGtzSW14TTgK",
+      "endpoints": [
+        "https://github.com/g-roliveira/ADK-sandboxed-legal/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "createUpdaterArtifacts": true
+  }
+}
