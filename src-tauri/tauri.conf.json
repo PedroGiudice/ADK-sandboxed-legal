@@ -30,7 +30,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM0QjIxRDRDMkE2MDMxMzQKUldRME1XQXFUQjJ5eE9aL25iUm4zeUhJdHBORjlDNnlxVDJFNW9Dc290MlpSTzRmNGtzSW14TTgK",
       "endpoints": [
-        "https://github.com/g-roliveira/ADK-sandboxed-legal/releases/latest/download/latest.json"
+        "https://github.com/PedroGiudice/ADK-sandboxed-legal/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"
