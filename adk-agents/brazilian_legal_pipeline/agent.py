@@ -351,9 +351,10 @@ class BrazilianLegalPipeline:
         self._state = {"consultation": consultation}
 
         # Inicializar loop controller para controle externo
+        # Usa checkpoint_dir dinamico baseado no workspace do caso
         self._loop_controller = LoopController(
             max_iterations=5,  # 5 fases no pipeline
-            checkpoint_dir=Path("./checkpoints"),
+            checkpoint_dir=self.config.get_checkpoint_dir(),
             checkpoint_interval=1
         )
         set_controller(self._loop_controller)
@@ -647,7 +648,7 @@ Produza o output final conforme as instrucoes.
 
     async def save_results(self, result: PipelineResult, filename: Optional[str] = None) -> Path:
         """Save pipeline results to file."""
-        output_dir = Path("./output")
+        output_dir = self.config.get_output_dir()
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if filename is None:

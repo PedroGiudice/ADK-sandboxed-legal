@@ -2,42 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AgentProfile, LegalCase, CaseStatus } from '../types';
 import { AVAILABLE_AGENTS } from '../constants';
 import { ScaleIcon, ChevronDownIcon, GeoSpinner } from './Icons';
+import { PipelineProgress } from '../services/agentBridge';
 
-// === Mock de Casos (sera substituido por dados reais) ===
-const MOCK_CASES: LegalCase[] = [
-  {
-    id: 'case-001',
-    name: 'Silva vs. Banco Nacional',
-    number: '0001234-56.2024.8.26.0100',
-    client: 'Joao Silva',
-    description: 'Acao de indenizacao por danos morais',
-    status: 'active',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-03-10'),
-    tags: ['consumidor', 'bancario'],
-  },
-  {
-    id: 'case-002',
-    name: 'Heranca Oliveira',
-    number: '0005678-90.2023.8.26.0002',
-    client: 'Familia Oliveira',
-    description: 'Inventario e partilha de bens',
-    status: 'active',
-    createdAt: new Date('2023-11-20'),
-    updatedAt: new Date('2024-02-28'),
-    tags: ['sucessoes', 'familia'],
-  },
-  {
-    id: 'case-003',
-    name: 'Contrato TechCorp',
-    client: 'TechCorp Ltda',
-    description: 'Revisao contratual e compliance',
-    status: 'pending',
-    createdAt: new Date('2024-03-01'),
-    updatedAt: new Date('2024-03-01'),
-    tags: ['empresarial', 'contratos'],
-  },
-];
+// Mock de fallback caso nenhum caso seja carregado
+const FALLBACK_CASES: LegalCase[] = [];
 
 interface SidebarProps {
   selectedCaseId: string | null;
@@ -45,6 +13,8 @@ interface SidebarProps {
   onSelectCase: (caseId: string | null) => void;
   onSelectAgent: (agentId: string) => void;
   cases?: LegalCase[];
+  onNewCase?: () => void;
+  pipelineProgress?: PipelineProgress | null;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -52,7 +22,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   selectedAgentId,
   onSelectCase,
   onSelectAgent,
-  cases = MOCK_CASES,
+  cases = FALLBACK_CASES,
+  onNewCase,
+  pipelineProgress,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCaseDropdownOpen, setIsCaseDropdownOpen] = useState(false);
@@ -207,7 +179,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ))}
 
                 {/* Adicionar novo caso */}
-                <div className="border-t border-border px-3 py-2 hover:bg-surface-elevated cursor-pointer flex items-center gap-2 text-accent">
+                <div
+                  onClick={() => {
+                    setIsCaseDropdownOpen(false);
+                    onNewCase?.();
+                  }}
+                  className="border-t border-border px-3 py-2 hover:bg-surface-elevated cursor-pointer flex items-center gap-2 text-accent"
+                >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
@@ -302,6 +280,29 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="mt-3 p-3 bg-surface-alt/50 rounded-sm border border-border-subtle">
               <p className="text-[10px] text-foreground-subtle leading-relaxed">
                 {selectedAgent.description}
+              </p>
+            </div>
+          )}
+
+          {/* Progresso do Pipeline */}
+          {pipelineProgress && (
+            <div className="mt-4 p-3 bg-accent/5 border border-accent/20 rounded-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-medium text-accent uppercase tracking-wider">
+                  Pipeline
+                </span>
+                <span className="text-[10px] text-foreground-subtle">
+                  {Math.round(pipelineProgress.progressPercent)}%
+                </span>
+              </div>
+              <div className="h-1.5 bg-surface-elevated rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent transition-all duration-300"
+                  style={{ width: `${pipelineProgress.progressPercent}%` }}
+                />
+              </div>
+              <p className="text-[9px] text-foreground-subtle mt-2 font-mono">
+                Fase: {pipelineProgress.currentPhase}
               </p>
             </div>
           )}
