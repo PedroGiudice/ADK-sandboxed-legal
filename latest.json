@@ -1,0 +1,11 @@
+{
+  "version": "0.1.1",
+  "notes": "Atualizacao automatica v0.1.1",
+  "pub_date": "2026-01-25T01:14:22Z",
+  "platforms": {
+    "linux-x86_64": {
+      "signature": "",
+      "url": "https://github.com/PedroGiudice/ADK-sandboxed-legal/releases/download/v0.1.1/Legal.ADK.Sandbox_0.1.1_amd64.AppImage"
+    }
+  }
+}
