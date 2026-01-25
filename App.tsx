@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect, createContext, useContext } from 'react';
-import AgentSelector from './components/AgentSelector';
+import Sidebar from './components/Sidebar';
 import ChatWorkspace from './components/ChatWorkspace';
 import ConfigPanel from './components/ConfigPanel';
 import IntegrationsPanel from './components/IntegrationsPanel';
 import ResizeHandle, { useResizable } from './components/ResizeHandle';
 import { AVAILABLE_AGENTS, DEFAULT_CONFIG, loadTheme, saveTheme, loadFont, clearMessages as clearStoredMessages, loadIntegrationsConfig } from './constants';
-import { Message, AgentRole, RuntimeConfig, Attachment, OutputStyle, MessagePart, Theme, IntegrationsConfig } from './types';
+import { Message, AgentRole, RuntimeConfig, Attachment, OutputStyle, Theme, IntegrationsConfig, LegalCase } from './types';
 import { sendPromptToAgent } from './services/adkService';
 import { runJurisprudenceAgent } from './services/agentBridge';
 import { check } from '@tauri-apps/plugin-updater';
@@ -27,7 +27,9 @@ export const ThemeContext = createContext<ThemeContextType>({
 export const useTheme = () => useContext(ThemeContext);
 
 const App: React.FC = () => {
-  const [activeAgentId, setActiveAgentId] = useState<string>(AVAILABLE_AGENTS[0].id);
+  // Hierarquia de contexto: Caso -> Agente
+  const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
+  const [activeAgentId, setActiveAgentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setThemeState] = useState<Theme>(loadTheme);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'ready'>('idle');
@@ -54,7 +56,16 @@ const App: React.FC = () => {
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig>(DEFAULT_CONFIG);
   const [integrationsConfig, setIntegrationsConfig] = useState<IntegrationsConfig>(loadIntegrationsConfig);
 
-  const activeAgent = AVAILABLE_AGENTS.find(a => a.id === activeAgentId) || AVAILABLE_AGENTS[0];
+  const activeAgent = activeAgentId
+    ? AVAILABLE_AGENTS.find(a => a.id === activeAgentId) || null
+    : null;
+
+  // Handler para selecao de caso (reseta agente ao trocar de caso)
+  const handleCaseSelect = useCallback((caseId: string | null) => {
+    setActiveCaseId(caseId);
+    // Opcional: resetar agente ao trocar de caso
+    // setActiveAgentId(null);
+  }, []);
 
   // Resizable sidebar
   const { size: sidebarWidth, handleResize: handleSidebarResize } = useResizable(
@@ -134,12 +145,24 @@ const App: React.FC = () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  const handleAgentSelect = (agentId: string) => {
+  const handleAgentSelect = useCallback((agentId: string) => {
     setActiveAgentId(agentId);
-  };
+  }, []);
 
   /** Simulates a complex agent response with multiple dynamic parts */
   const handleSendMessage = useCallback(async (content: string, attachments: Attachment[], style: OutputStyle) => {
+    // Verificar se ha caso e agente selecionados
+    if (!activeCaseId || !activeAgent) {
+      const errorMsg: Message = {
+        id: Date.now().toString(),
+        role: AgentRole.ASSISTANT,
+        content: 'Selecione um Caso e um Agente antes de enviar mensagens.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+      return;
+    }
+
     const newUserMessage: Message = {
       id: Date.now().toString(),
       role: AgentRole.USER,
@@ -147,10 +170,10 @@ const App: React.FC = () => {
       timestamp: new Date(),
       attachments: attachments
     };
-    
+
     setMessages(prev => [...prev, newUserMessage]);
     setIsLoading(true);
-    
+
     const requestConfig = {
       ...runtimeConfig,
       outputStyle: style
@@ -159,7 +182,7 @@ const App: React.FC = () => {
     try {
         let agentResponse: Message;
 
-        if (activeAgent.id === 'agent-caselaw') {
+        if (activeAgent?.id === 'agent-caselaw') {
             const result = await runJurisprudenceAgent(content, (data) => {
                 // Optional: We could parse "thought" lines here if the python agent emitted them
             });
@@ -207,7 +230,7 @@ const App: React.FC = () => {
         setIsLoading(false);
     }
 
-  }, [activeAgent, runtimeConfig]);
+  }, [activeAgent, activeCaseId, runtimeConfig]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
@@ -215,8 +238,10 @@ const App: React.FC = () => {
 
         {/* Resizable Sidebar */}
         <div style={{ width: sidebarWidth }} className="flex-shrink-0">
-          <AgentSelector
+          <Sidebar
+            selectedCaseId={activeCaseId}
             selectedAgentId={activeAgentId}
+            onSelectCase={handleCaseSelect}
             onSelectAgent={handleAgentSelect}
           />
         </div>
@@ -231,6 +256,7 @@ const App: React.FC = () => {
         <div className="flex-1 flex flex-col relative min-w-0">
           <ChatWorkspace
             activeAgent={activeAgent}
+            activeCaseId={activeCaseId}
             messages={messages}
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
