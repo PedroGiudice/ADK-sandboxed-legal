@@ -1,13 +1,26 @@
 import React, { useState, useCallback, useEffect, createContext, useContext } from 'react';
-import AgentSelector from './components/AgentSelector';
+import Sidebar from './components/Sidebar';
 import ChatWorkspace from './components/ChatWorkspace';
 import ConfigPanel from './components/ConfigPanel';
 import IntegrationsPanel from './components/IntegrationsPanel';
+import WorkspaceSetupModal from './components/WorkspaceSetupModal';
+import NewCaseModal, { NewCaseData } from './components/NewCaseModal';
 import ResizeHandle, { useResizable } from './components/ResizeHandle';
 import { AVAILABLE_AGENTS, DEFAULT_CONFIG, loadTheme, saveTheme, loadFont, clearMessages as clearStoredMessages, loadIntegrationsConfig } from './constants';
-import { Message, AgentRole, RuntimeConfig, Attachment, OutputStyle, MessagePart, Theme, IntegrationsConfig } from './types';
+import { Message, AgentRole, RuntimeConfig, Attachment, OutputStyle, Theme, IntegrationsConfig, LegalCase } from './types';
 import { sendPromptToAgent } from './services/adkService';
-import { runJurisprudenceAgent } from './services/agentBridge';
+import { runJurisprudenceAgent, startAndRunCaseSession, PipelineProgress } from './services/agentBridge';
+import {
+  getWorkspaceRoot,
+  isWorkspaceConfigured,
+  selectWorkspaceRoot,
+  loadRegistry,
+  createCase,
+  listCases,
+  listClients,
+  toUICase,
+  CaseRegistryEntry
+} from './services/caseRegistryService';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 
@@ -27,11 +40,23 @@ export const ThemeContext = createContext<ThemeContextType>({
 export const useTheme = () => useContext(ThemeContext);
 
 const App: React.FC = () => {
-  const [activeAgentId, setActiveAgentId] = useState<string>(AVAILABLE_AGENTS[0].id);
+  // Hierarquia de contexto: Caso -> Agente
+  const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
+  const [activeAgentId, setActiveAgentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setThemeState] = useState<Theme>(loadTheme);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'ready'>('idle');
   const [updateProgress, setUpdateProgress] = useState(0);
+
+  // Workspace e Casos
+  const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(getWorkspaceRoot());
+  const [cases, setCases] = useState<LegalCase[]>([]);
+  const [clients, setClients] = useState<string[]>([]);
+  const [showWorkspaceSetup, setShowWorkspaceSetup] = useState(false);
+  const [showNewCaseModal, setShowNewCaseModal] = useState(false);
+
+  // Progresso do pipeline
+  const [pipelineProgress, setPipelineProgress] = useState<PipelineProgress | null>(null);
 
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
@@ -54,7 +79,16 @@ const App: React.FC = () => {
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig>(DEFAULT_CONFIG);
   const [integrationsConfig, setIntegrationsConfig] = useState<IntegrationsConfig>(loadIntegrationsConfig);
 
-  const activeAgent = AVAILABLE_AGENTS.find(a => a.id === activeAgentId) || AVAILABLE_AGENTS[0];
+  const activeAgent = activeAgentId
+    ? AVAILABLE_AGENTS.find(a => a.id === activeAgentId) || null
+    : null;
+
+  // Handler para selecao de caso (reseta agente ao trocar de caso)
+  const handleCaseSelect = useCallback((caseId: string | null) => {
+    setActiveCaseId(caseId);
+    // Opcional: resetar agente ao trocar de caso
+    // setActiveAgentId(null);
+  }, []);
 
   // Resizable sidebar
   const { size: sidebarWidth, handleResize: handleSidebarResize } = useResizable(
@@ -124,6 +158,62 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Verificar workspace na inicializacao
+  useEffect(() => {
+    const checkWorkspace = async () => {
+      const configured = await isWorkspaceConfigured();
+      if (!configured && !workspaceRoot) {
+        setShowWorkspaceSetup(true);
+      } else if (workspaceRoot) {
+        // Carregar casos
+        await refreshCases();
+      }
+    };
+    checkWorkspace();
+  }, [workspaceRoot]);
+
+  // Carregar casos do registry
+  const refreshCases = useCallback(async () => {
+    try {
+      const caseEntries = await listCases();
+      setCases(caseEntries.map(toUICase));
+
+      const clientList = await listClients();
+      setClients(clientList);
+    } catch (e) {
+      console.error('Erro ao carregar casos:', e);
+    }
+  }, []);
+
+  // Handler para configurar workspace
+  const handleWorkspaceComplete = useCallback(async (path: string) => {
+    setWorkspaceRoot(path);
+    setShowWorkspaceSetup(false);
+    await refreshCases();
+  }, [refreshCases]);
+
+  // Handler para criar novo caso
+  const handleCreateCase = useCallback(async (data: NewCaseData): Promise<boolean> => {
+    try {
+      const newCase = await createCase(data.name, {
+        number: data.number,
+        client: data.client,
+        description: data.description,
+        tags: data.tags
+      });
+
+      if (newCase) {
+        await refreshCases();
+        setActiveCaseId(newCase.id);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('Erro ao criar caso:', e);
+      return false;
+    }
+  }, [refreshCases]);
+
   // Clear chat handler
   const handleClearChat = useCallback(() => {
     setMessages([]);
@@ -134,12 +224,30 @@ const App: React.FC = () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  const handleAgentSelect = (agentId: string) => {
+  const handleAgentSelect = useCallback((agentId: string) => {
     setActiveAgentId(agentId);
-  };
+  }, []);
 
-  /** Simulates a complex agent response with multiple dynamic parts */
+  // Encontrar caso ativo
+  const activeCase = cases.find(c => c.id === activeCaseId);
+
+  /** Envia mensagem para o agente, usando sandboxing quando aplicavel */
   const handleSendMessage = useCallback(async (content: string, attachments: Attachment[], style: OutputStyle) => {
+    // Verificar se ha caso e agente selecionados
+    if (!activeCaseId || !activeAgent) {
+      const errorMsg: Message = {
+        id: Date.now().toString(),
+        role: AgentRole.ASSISTANT,
+        content: 'Selecione um Caso e um Agente antes de enviar mensagens.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+      return;
+    }
+
+    // Obter caso ativo para contexto
+    const currentCase = cases.find(c => c.id === activeCaseId);
+
     const newUserMessage: Message = {
       id: Date.now().toString(),
       role: AgentRole.USER,
@@ -147,10 +255,11 @@ const App: React.FC = () => {
       timestamp: new Date(),
       attachments: attachments
     };
-    
+
     setMessages(prev => [...prev, newUserMessage]);
     setIsLoading(true);
-    
+    setPipelineProgress(null);
+
     const requestConfig = {
       ...runtimeConfig,
       outputStyle: style
@@ -159,7 +268,60 @@ const App: React.FC = () => {
     try {
         let agentResponse: Message;
 
-        if (activeAgent.id === 'agent-caselaw') {
+        // Usar pipeline sandboxed para agente legal-pipeline
+        if (activeAgent?.id === 'agent-legal-pipeline' && currentCase?.contextPath) {
+            // Construir consulta estruturada
+            const consultation = {
+              consulta: {
+                texto: content,
+                tipo_solicitado: 'parecer',
+                urgencia: 'media'
+              },
+              contexto: {
+                area_direito: currentCase.tags?.[0] || 'geral',
+                caso_id: currentCase.id,
+                caso_nome: currentCase.name
+              },
+              fatos: [],
+              normas_identificadas: [],
+              jurisprudencia_identificada: [],
+              documentos_anexos: attachments.map(a => ({ nome: a.name, tipo: a.type })),
+              restricoes: {}
+            };
+
+            const result = await startAndRunCaseSession(
+              currentCase.contextPath,
+              currentCase.id,
+              consultation,
+              {
+                onProgress: (progress) => {
+                  setPipelineProgress(progress);
+                },
+                onOutput: (line) => {
+                  console.log('[PIPELINE]:', line);
+                }
+              }
+            );
+
+            if (!result.success) {
+              throw new Error(result.error);
+            }
+
+            const pipelineResult = result.data?.pipeline_result as Record<string, unknown> | undefined;
+
+            agentResponse = {
+              id: (Date.now() + 1).toString(),
+              role: AgentRole.ASSISTANT,
+              content: pipelineResult?.output_path
+                ? `Pipeline concluido! Resultado salvo em: ${pipelineResult.output_path}`
+                : 'Pipeline concluido com sucesso.',
+              parts: [
+                { type: 'text', content: `Fases completadas: ${(pipelineResult?.phases_completed as string[] || []).join(', ')}` }
+              ],
+              timestamp: new Date()
+            };
+
+        } else if (activeAgent?.id === 'agent-caselaw') {
             const result = await runJurisprudenceAgent(content, (data) => {
                 // Optional: We could parse "thought" lines here if the python agent emitted them
             });
@@ -168,13 +330,10 @@ const App: React.FC = () => {
                 throw new Error(result.error);
             }
 
-            // Construct parts based on the output
-            // For now, we treat the whole output as text, but in a real app we'd parse the markdown structure
             agentResponse = {
                 id: (Date.now() + 1).toString(),
                 role: AgentRole.ASSISTANT,
                 content: result.output || "No output returned.",
-                // Add a file operation part if an output path was detected
                 parts: result.outputPath ? [
                     { type: 'text', content: result.output || "" },
                     { type: 'file_op', content: `read ${result.outputPath}`, metadata: { filePath: result.outputPath } }
@@ -205,9 +364,10 @@ const App: React.FC = () => {
         setMessages(prev => [...prev, errorMsg]);
     } finally {
         setIsLoading(false);
+        setPipelineProgress(null);
     }
 
-  }, [activeAgent, runtimeConfig]);
+  }, [activeAgent, activeCaseId, cases, runtimeConfig]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
@@ -215,9 +375,14 @@ const App: React.FC = () => {
 
         {/* Resizable Sidebar */}
         <div style={{ width: sidebarWidth }} className="flex-shrink-0">
-          <AgentSelector
+          <Sidebar
+            selectedCaseId={activeCaseId}
             selectedAgentId={activeAgentId}
+            onSelectCase={handleCaseSelect}
             onSelectAgent={handleAgentSelect}
+            cases={cases}
+            onNewCase={() => setShowNewCaseModal(true)}
+            pipelineProgress={pipelineProgress}
           />
         </div>
 
@@ -231,6 +396,7 @@ const App: React.FC = () => {
         <div className="flex-1 flex flex-col relative min-w-0">
           <ChatWorkspace
             activeAgent={activeAgent}
+            activeCaseId={activeCaseId}
             messages={messages}
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
@@ -251,6 +417,20 @@ const App: React.FC = () => {
             onClose={() => setIsIntegrationsOpen(false)}
           />
         </div>
+
+        {/* Modals */}
+        <WorkspaceSetupModal
+          isOpen={showWorkspaceSetup}
+          onComplete={handleWorkspaceComplete}
+          onSelectFolder={selectWorkspaceRoot}
+        />
+
+        <NewCaseModal
+          isOpen={showNewCaseModal}
+          onClose={() => setShowNewCaseModal(false)}
+          onCreate={handleCreateCase}
+          existingClients={clients}
+        />
       </div>
     </ThemeContext.Provider>
   );

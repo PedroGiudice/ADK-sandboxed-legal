@@ -115,3 +115,40 @@ export interface IntegrationsConfig {
   googleDrive?: GoogleDriveAuth;
   mcpServers: MCPServer[];
 }
+
+// === Legal Case (Entidade Juridica / Projeto) ===
+
+export type CaseStatus = 'active' | 'archived' | 'pending';
+
+export interface LegalCase {
+  id: string;
+  name: string;
+  number?: string; // Numero do processo (opcional)
+  client?: string;
+  description?: string;
+  status: CaseStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  // Contexto isolado
+  contextPath?: string; // Caminho do diretorio/branch
+  tags?: string[];
+}
+
+// === Agent Instance (Instancia Efemera Vinculada) ===
+
+export interface AgentInstance {
+  agentId: string;
+  caseId: string;
+  sessionId: string;
+  createdAt: Date;
+  // Historico da sessao (hot-swapping preserva isso)
+  messageHistory?: Message[];
+}
+
+// === Workspace Context (Estado Global da UI) ===
+
+export interface WorkspaceContext {
+  activeCase: LegalCase | null;
+  activeAgent: AgentProfile | null;
+  agentInstance: AgentInstance | null;
+}

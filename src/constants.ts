@@ -1,5 +1,5 @@
 import { AgentProfile, RuntimeConfig, Theme, MCPServer, LocalFolder, FilesystemConfig, IntegrationsConfig } from './types';
-import themesMetadata from './themes/themes-metadata.json';
+import themesMetadata from '../themes/themes-metadata.json';
 
 // Theme configuration from TOML-generated JSON
 export const THEME_CONFIG: Record<string, { name: string; description: string }> = themesMetadata.themes;

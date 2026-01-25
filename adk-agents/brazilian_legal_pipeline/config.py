@@ -2,7 +2,8 @@
 Configuracoes da pipeline juridica brasileira.
 """
 from dataclasses import dataclass, field
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 
 @dataclass
@@ -39,6 +40,34 @@ class PipelineConfig:
         "tjmg.jus.br",
         "planalto.gov.br",
     ])
+
+    # === Sandboxing: Paths por caso ===
+    workspace_path: Optional[Path] = None
+    case_id: Optional[str] = None
+
+    def get_checkpoint_dir(self) -> Path:
+        """Retorna diretorio de checkpoints (isolado por caso se workspace_path definido)."""
+        if self.workspace_path:
+            return self.workspace_path / ".adk_state"
+        return Path("./checkpoints")
+
+    def get_output_dir(self) -> Path:
+        """Retorna diretorio de output (isolado por caso se workspace_path definido)."""
+        if self.workspace_path:
+            return self.workspace_path / "drafts"
+        return Path("./output")
+
+    def get_docs_dir(self) -> Path:
+        """Retorna diretorio de documentos do caso."""
+        if self.workspace_path:
+            return self.workspace_path / "docs"
+        return Path("./docs")
+
+    def ensure_directories(self) -> None:
+        """Cria todos os diretorios necessarios para o caso."""
+        self.get_checkpoint_dir().mkdir(parents=True, exist_ok=True)
+        self.get_output_dir().mkdir(parents=True, exist_ok=True)
+        self.get_docs_dir().mkdir(parents=True, exist_ok=True)
 
 
 # Instancia global

@@ -203,7 +203,8 @@ const AgentMessageBody: React.FC<{ parts?: MessagePart[], content: string, viewM
 };
 
 interface ChatWorkspaceProps {
-  activeAgent: AgentProfile;
+  activeAgent: AgentProfile | null;
+  activeCaseId?: string | null;
   messages: Message[];
   onSendMessage: (content: string, attachments: Attachment[], style: OutputStyle) => void;
   isLoading?: boolean;
@@ -211,7 +212,7 @@ interface ChatWorkspaceProps {
   onOpenIntegrations?: () => void;
 }
 
-const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, messages, onSendMessage, isLoading = false, onOpenConfig, onOpenIntegrations }) => {
+const ChatWorkspace: React.FC<ChatWorkspaceProps> = ({ activeAgent, activeCaseId, messages, onSendMessage, isLoading = false, onOpenConfig, onOpenIntegrations }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('developer');
 
   // Slate editor state
