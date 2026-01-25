@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Este arquivo fornece orientacao ao Claude Code (claude.ai/code) ao trabalhar com este repositorio.
 
 **PORTUGUES BRASILEIRO COM ACENTUACAO CORRETA.** Usar "eh" em vez de "e" e inaceitavel. Acentos sao obrigatorios: e, a, a, c, etc.
 
@@ -16,13 +16,16 @@ bun install && bun run dev
 bun run build
 
 # Build Tauri (desktop Linux)
-cd src-tauri && cargo build --release
+bun run tauri build
 
 # Executar agente ADK (requer GOOGLE_API_KEY)
-cd adk-agents/jurisprudence_agent && python agent.py "Tema juridico"
+cd adk-agents/brazilian_legal_pipeline
+source .venv/bin/activate
+python -m brazilian_legal_pipeline.session_cli --help
 
-# Executar deep research
-cd adk-agents/deep_research_sandbox && python deep_research_agent.py "Topico"
+# Executar pesquisa de jurisprudencia
+cd adk-agents/jurisprudence_agent
+python agent.py "Tema juridico"
 ```
 
 ---
@@ -31,28 +34,48 @@ cd adk-agents/deep_research_sandbox && python deep_research_agent.py "Topico"
 
 ```
 ADK-sandboxed-legal/
-├── App.tsx                  # Shell principal React (state: agent, messages, config)
-├── components/              # UI React
-│   ├── AgentSelector.tsx    # Selecao de agentes
-│   ├── ChatWorkspace.tsx    # Interface de chat com mensagens estruturadas
-│   ├── ConfigPanel.tsx      # Configuracoes runtime
-│   └── Icons.tsx            # SVG icons
-├── services/
-│   ├── adkService.ts        # Cliente para Gemini SDK (@google/genai)
-│   └── agentBridge.ts       # Bridge Tauri-Python (executa agentes via shell)
-├── adk-agents/              # Agentes Python autonomos
-│   ├── jurisprudence_agent/ # Pesquisa juridica com whitelist de tribunais
-│   ├── deep_research_sandbox/ # Deep Research iterativo
-│   ├── visual_verifier/     # Verificador de UI
-│   └── iterative_research_agent.py  # Pesquisador com loop
-├── src-tauri/               # Backend Rust (Tauri 2.x)
-│   ├── tauri.conf.json      # Config principal (shell scope, identifier)
-│   ├── capabilities/        # Permissoes de plugins
-│   └── src/                 # Codigo Rust
-└── .claude/                 # Claude Code config
-    ├── agents/              # Subagentes especializados
-    ├── skills/              # Skills Tauri
-    └── skill-rules.json     # Triggers MCP
+|-- src/                         # Codigo React
+|   |-- App.tsx                  # Shell principal (state: case, agent, messages)
+|   |-- index.tsx                # Entry point
+|   |-- constants.ts             # Configuracoes e agentes disponiveis
+|   |-- types.ts                 # Tipos TypeScript principais
+|   |-- components/              # UI React
+|   |   |-- Sidebar.tsx          # Navegacao Caso -> Agente
+|   |   |-- ChatWorkspace.tsx    # Interface de chat (Modo Dev/Cliente)
+|   |   |-- ConfigPanel.tsx      # Configuracoes runtime
+|   |   |-- NewCaseModal.tsx     # Criacao de casos
+|   |   |-- editor/              # Editor Slate.js
+|   |-- services/                # Camada de servicos
+|   |   |-- adkService.ts        # Cliente Gemini SDK (@google/genai)
+|   |   |-- agentBridge.ts       # Bridge Tauri-Python (shell)
+|   |   |-- caseRegistryService.ts # Gerenciamento de casos
+|   |   |-- filesystemService.ts # Operacoes de arquivo
+|   |   |-- googleDriveService.ts # OAuth + API Google Drive
+|   |   |-- mcpService.ts        # Configuracao MCP
+|   |-- types/                   # Tipos adicionais
+|       |-- slate.d.ts           # Tipos Slate.js
+|-- src-tauri/                   # Backend Rust (Tauri 2.x)
+|   |-- tauri.conf.json          # Config principal
+|   |-- capabilities/            # Permissoes de plugins
+|   |-- src/                     # Codigo Rust
+|-- adk-agents/                  # Agentes Python autonomos
+|   |-- brazilian_legal_pipeline/ # Pipeline juridica dialetica
+|   |-- jurisprudence_agent/     # Pesquisa de jurisprudencia
+|-- docs/                        # Documentacao
+|   |-- ARCHITECTURE.md          # Arquitetura 4 camadas
+|   |-- AGENTS.md                # Guia de agentes e ferramentas LLM
+|   |-- SERVICES_API.md          # API de servicos
+|   |-- images/                  # Imagens
+|-- .claude/                     # Configuracao Claude Code
+|   |-- agents/                  # Subagentes especializados
+|   |-- commands/                # Comandos customizados
+|   |-- skills/                  # Skills ativaveis
+|   |-- skill-rules.json         # Triggers automaticos
+|-- .gemini/                     # Configuracao Gemini CLI
+|   |-- skills/                  # Skills espelhadas
+|-- themes/                      # Temas TOML
+|-- plugins/                     # Vite plugins
+|-- scripts/                     # Scripts utilitarios
 ```
 
 ### Fluxo de Dados
@@ -63,9 +86,9 @@ Usuario (ChatWorkspace)
     v
 App.tsx (handleSendMessage)
     |
-    +---> agent-caselaw: agentBridge.ts -> Tauri shell -> Python agent
+    +---> agent-legal-pipeline: agentBridge -> Tauri shell -> Python
     |
-    +---> outros agentes: adkService.ts -> Gemini SDK diretamente
+    +---> outros agentes: adkService -> Gemini SDK
     |
     v
 Resposta (Message com parts: text, tool_call, file_op, etc.)
@@ -88,10 +111,10 @@ GEMINI_API_KEY=AIza...  # Obrigatorio para agentes ADK
 
 ### 3. Agentes Python Requerem venv
 ```bash
-cd adk-agents/jurisprudence_agent
+cd adk-agents/brazilian_legal_pipeline
 python -m venv .venv
 source .venv/bin/activate
-pip install google-adk google-genai python-dotenv
+pip install -r requirements.txt
 ```
 
 ### 4. Nunca Commitar
@@ -142,6 +165,14 @@ Em `tauri.conf.json`, apenas:
 
 ---
 
+## Documentacao Adicional
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Arquitetura 4 camadas
+- [docs/AGENTS.md](docs/AGENTS.md) - Agentes e ferramentas LLM
+- [docs/SERVICES_API.md](docs/SERVICES_API.md) - API de servicos
+
+---
+
 ## Erros Aprendidos
 
 **INSTRUCAO PARA CLAUDE:** Adicione uma entrada aqui quando:
@@ -180,18 +211,38 @@ tail -50 ~/.vibe-log/hooks.log
 
 # Logs Tauri
 RUST_LOG=debug cargo tauri dev
+
+# TypeScript check
+bunx tsc --noEmit
 ```
 
 ---
 
-## Subagentes Disponiveis
+## Subagentes e Skills Claude Code
 
-Definidos em `.claude/agents/`:
+### Subagentes (.claude/agents/)
 - **tauri-frontend-dev**: Especialista UI React/Vite/Tailwind
 - **tauri-rust-dev**: Especialista backend Rust
 - **tauri-reviewer**: Seguranca e QA
 
-Skills em `.claude/skills/`:
+### Skills (.claude/skills/)
 - tauri-core.md
 - tauri-frontend.md
 - tauri-native-apis.md
+- skill-developer.md
+- systematic-debugging.md
+
+### Comandos (.claude/commands/)
+- /commit - Cria commit seguindo convencoes
+- /deep-research - Pesquisa profunda
+
+---
+
+## Ferramentas Gemini CLI
+
+Skills espelhadas em `.gemini/skills/`:
+- skill-developer.md
+- systematic-debugging.md
+- tauri-core.md
+- tauri-frontend.md
+- tauri-reviewer.md
