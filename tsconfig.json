@@ -21,19 +21,17 @@
     "resolveJsonModule": true,
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
   "include": [
-    "*.ts",
-    "*.tsx",
-    "components/**/*",
-    "services/**/*",
+    "src/**/*",
     "plugins/**/*",
-    "themes/**/*"
+    "themes/**/*",
+    "vite-env.d.ts"
   ],
   "exclude": [
     "node_modules",
