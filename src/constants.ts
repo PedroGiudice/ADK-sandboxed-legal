@@ -1,4 +1,4 @@
-import { AgentProfile, RuntimeConfig, Theme, MCPServer, LocalFolder, FilesystemConfig, IntegrationsConfig } from './types';
+import { AgentProfile, RuntimeConfig, Theme, MCPServer, LocalFolder, FilesystemConfig, IntegrationsConfig, Message } from './types';
 import themesMetadata from '../themes/themes-metadata.json';
 
 // Theme configuration from TOML-generated JSON
@@ -67,6 +67,46 @@ export const clearMessages = (): void => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(MESSAGES_STORAGE_KEY);
   }
+};
+
+// === Chat History por Contexto (Caso + Agente) ===
+
+const getChatStorageKey = (caseId: string | null, agentId: string | null): string => {
+  if (!caseId || !agentId) return 'adk_chat_global_v1';
+  return `adk_chat_${caseId}_${agentId}`;
+};
+
+export const loadMessagesForContext = (caseId: string | null, agentId: string | null): Message[] => {
+  if (typeof window === 'undefined') return [];
+  const key = getChatStorageKey(caseId, agentId);
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return JSON.parse(saved).map((m: Record<string, unknown>) => ({
+        ...m,
+        timestamp: new Date(m.timestamp as string)
+      }));
+    }
+  } catch (e) {
+    console.error('Erro ao carregar historico:', e);
+  }
+  return [];
+};
+
+export const saveMessagesForContext = (
+  caseId: string | null,
+  agentId: string | null,
+  messages: Message[]
+): void => {
+  if (typeof window === 'undefined') return;
+  const key = getChatStorageKey(caseId, agentId);
+  localStorage.setItem(key, JSON.stringify(messages));
+};
+
+export const clearMessagesForContext = (caseId: string | null, agentId: string | null): void => {
+  if (typeof window === 'undefined') return;
+  const key = getChatStorageKey(caseId, agentId);
+  localStorage.removeItem(key);
 };
 
 export const AVAILABLE_AGENTS: AgentProfile[] = [

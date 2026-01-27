@@ -1,5 +1,6 @@
 import { open } from '@tauri-apps/plugin-dialog';
-import { readTextFile, writeTextFile, exists, mkdir, readDir } from '@tauri-apps/plugin-fs';
+import { readTextFile, writeTextFile, writeFile, exists, mkdir, readDir } from '@tauri-apps/plugin-fs';
+import { join } from '@tauri-apps/api/path';
 import { LocalFolder } from '../types';
 import { generateId } from '../constants';
 
@@ -145,4 +146,61 @@ export const validateFolders = async (folders: LocalFolder[]): Promise<LocalFold
   }
 
   return validated;
+};
+
+/**
+ * Documento anexo salvo em disco
+ */
+export interface SavedDocument {
+  nome: string;
+  tipo: string;
+  caminho: string; // Path relativo ao caso
+  tamanho: number;
+}
+
+/**
+ * Salva um arquivo binario (de base64) no diretorio docs/ do caso
+ * Retorna o path relativo para passar ao agente Python
+ */
+export const saveAttachmentToCase = async (
+  casePath: string,
+  fileName: string,
+  base64Data: string,
+  mimeType: string
+): Promise<SavedDocument | null> => {
+  try {
+    // Garantir que o diretorio docs existe
+    const docsDir = await join(casePath, 'docs');
+    await ensureDirectory(docsDir);
+
+    // Sanitizar nome do arquivo
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const uniqueName = `${Date.now()}_${safeName}`;
+    const fullPath = await join(docsDir, uniqueName);
+
+    // Converter base64 para Uint8Array
+    // Remove o prefixo data:mime;base64, se presente
+    const base64Content = base64Data.includes(',')
+      ? base64Data.split(',')[1]
+      : base64Data;
+
+    const binaryString = atob(base64Content);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Salvar arquivo
+    await writeFile(fullPath, bytes);
+
+    return {
+      nome: fileName,
+      tipo: mimeType,
+      caminho: `docs/${uniqueName}`, // Path relativo ao caso
+      tamanho: bytes.length
+    };
+  } catch (error) {
+    console.error('Erro ao salvar anexo:', error);
+    return null;
+  }
 };

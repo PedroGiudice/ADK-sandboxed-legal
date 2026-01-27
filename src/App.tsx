@@ -6,7 +6,7 @@ import IntegrationsPanel from './components/IntegrationsPanel';
 import WorkspaceSetupModal from './components/WorkspaceSetupModal';
 import NewCaseModal, { NewCaseData } from './components/NewCaseModal';
 import ResizeHandle, { useResizable } from './components/ResizeHandle';
-import { AVAILABLE_AGENTS, DEFAULT_CONFIG, loadTheme, saveTheme, loadFont, clearMessages as clearStoredMessages, loadIntegrationsConfig } from './constants';
+import { AVAILABLE_AGENTS, DEFAULT_CONFIG, loadTheme, saveTheme, loadFont, loadIntegrationsConfig, loadMessagesForContext, saveMessagesForContext, clearMessagesForContext } from './constants';
 import { Message, AgentRole, RuntimeConfig, Attachment, OutputStyle, Theme, IntegrationsConfig, LegalCase } from './types';
 import { sendPromptToAgent } from './services/adkService';
 import { runJurisprudenceAgent, startAndRunCaseSession, PipelineProgress } from './services/agentBridge';
@@ -21,10 +21,12 @@ import {
   toUICase,
   CaseRegistryEntry
 } from './services/caseRegistryService';
+import { saveAttachmentToCase, SavedDocument } from './services/filesystemService';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 
-const LOCAL_STORAGE_KEY = 'adk_chat_history_v1';
+// Removido: const LOCAL_STORAGE_KEY = 'adk_chat_history_v1';
+// Agora usamos loadMessagesForContext/saveMessagesForContext por caso+agente
 
 // Theme Context
 interface ThemeContextType {
@@ -58,21 +60,8 @@ const App: React.FC = () => {
   // Progresso do pipeline
   const [pipelineProgress, setPipelineProgress] = useState<PipelineProgress | null>(null);
 
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return parsed.map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp)
-        }));
-      }
-    } catch (e) {
-      console.error("Failed to load history", e);
-    }
-    return [];
-  });
+  // Mensagens agora sao gerenciadas por contexto (caso + agente)
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isIntegrationsOpen, setIsIntegrationsOpen] = useState(false);
@@ -214,15 +203,25 @@ const App: React.FC = () => {
     }
   }, [refreshCases]);
 
+  // Carregar mensagens ao trocar de caso ou agente
+  useEffect(() => {
+    const loaded = loadMessagesForContext(activeCaseId, activeAgentId);
+    setMessages(loaded);
+  }, [activeCaseId, activeAgentId]);
+
+  // Salvar mensagens quando mudam (com debounce implicito pelo estado)
+  useEffect(() => {
+    // So salvar se houver caso e agente selecionados e mensagens para salvar
+    if (activeCaseId && activeAgentId && messages.length > 0) {
+      saveMessagesForContext(activeCaseId, activeAgentId, messages);
+    }
+  }, [messages, activeCaseId, activeAgentId]);
+
   // Clear chat handler
   const handleClearChat = useCallback(() => {
     setMessages([]);
-    clearStoredMessages();
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(messages));
-  }, [messages]);
+    clearMessagesForContext(activeCaseId, activeAgentId);
+  }, [activeCaseId, activeAgentId]);
 
   const handleAgentSelect = useCallback((agentId: string) => {
     setActiveAgentId(agentId);
@@ -270,6 +269,22 @@ const App: React.FC = () => {
 
         // Usar pipeline sandboxed para agente legal-pipeline
         if (activeAgent?.id === 'agent-legal-pipeline' && currentCase?.contextPath) {
+            // Salvar arquivos anexos no diretorio do caso
+            const savedDocs: SavedDocument[] = [];
+            for (const att of attachments) {
+              const saved = await saveAttachmentToCase(
+                currentCase.contextPath,
+                att.name,
+                att.data,
+                att.type
+              );
+              if (saved) {
+                savedDocs.push(saved);
+              } else {
+                console.warn(`Falha ao salvar anexo: ${att.name}`);
+              }
+            }
+
             // Construir consulta estruturada
             const consultation = {
               consulta: {
@@ -285,7 +300,7 @@ const App: React.FC = () => {
               fatos: [],
               normas_identificadas: [],
               jurisprudencia_identificada: [],
-              documentos_anexos: attachments.map(a => ({ nome: a.name, tipo: a.type })),
+              documentos_anexos: savedDocs, // Agora passa path em vez de base64
               restricoes: {}
             };
 

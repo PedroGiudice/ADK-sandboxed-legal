@@ -7,6 +7,7 @@ Exports:
     - validate_citation_tool: Valida formato de citacoes juridicas
     - exit_debate_tool: Encerra debates quando condicao de saida e atingida
     - filesystem_tools: Tools de acesso ao filesystem (read, write, list)
+    - shell_tools: Tools de busca com grep, find e comandos basicos
 """
 
 from .legal_search import search_planalto_tool, search_jurisprudence_tool
@@ -20,6 +21,13 @@ from .filesystem import (
     list_directory_tool,
     file_exists_tool,
 )
+from .shell_tools import (
+    shell_tools,
+    grep_files_tool,
+    find_files_tool,
+    run_shell_command_tool,
+    count_lines_tool,
+)
 
 __all__ = [
     "search_planalto_tool",
@@ -32,4 +40,9 @@ __all__ = [
     "append_file_tool",
     "list_directory_tool",
     "file_exists_tool",
+    "shell_tools",
+    "grep_files_tool",
+    "find_files_tool",
+    "run_shell_command_tool",
+    "count_lines_tool",
 ]

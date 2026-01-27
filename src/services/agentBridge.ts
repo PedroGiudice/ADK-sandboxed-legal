@@ -281,6 +281,11 @@ export const startCaseSession = async (
 ): Promise<SessionResult> => {
   console.log(`Starting case session: ${caseId} at ${casePath}`);
 
+  // Carregar config de integracoes e adicionar ADK_WORKSPACE
+  const integrationsConfig = loadIntegrationsConfig();
+  const envVars = buildEnvFromConfig(integrationsConfig);
+  envVars.ADK_WORKSPACE = casePath; // Sandboxing: agente so acessa este diretorio
+
   try {
     const command = Command.create('python', [
       '-m', 'brazilian_legal_pipeline.session_cli',
@@ -288,7 +293,8 @@ export const startCaseSession = async (
       '--case-path', casePath,
       '--case-id', caseId
     ], {
-      cwd: 'adk-agents'
+      cwd: 'adk-agents',
+      env: envVars
     });
 
     let sessionId: string | undefined;
@@ -344,9 +350,17 @@ export const startCaseSession = async (
 export const runCaseSession = async (
   sessionId: string,
   consultation: Record<string, unknown>,
+  casePath?: string,
   options?: SessionOptions
 ): Promise<SessionResult> => {
   console.log(`Running pipeline in session: ${sessionId}`);
+
+  // Carregar config de integracoes
+  const integrationsConfig = loadIntegrationsConfig();
+  const envVars = buildEnvFromConfig(integrationsConfig);
+  if (casePath) {
+    envVars.ADK_WORKSPACE = casePath; // Sandboxing
+  }
 
   try {
     const command = Command.create('python', [
@@ -355,7 +369,8 @@ export const runCaseSession = async (
       '--session-id', sessionId,
       '--consultation', JSON.stringify(consultation)
     ], {
-      cwd: 'adk-agents'
+      cwd: 'adk-agents',
+      env: envVars
     });
 
     let resultData: Record<string, unknown> | undefined;
@@ -429,6 +444,13 @@ export const startAndRunCaseSession = async (
 ): Promise<SessionResult> => {
   console.log(`Starting and running case session: ${caseId}`);
 
+  // Carregar config de integracoes e adicionar ADK_WORKSPACE
+  const integrationsConfig = loadIntegrationsConfig();
+  const envVars = buildEnvFromConfig(integrationsConfig);
+  envVars.ADK_WORKSPACE = casePath; // Sandboxing: agente so acessa este diretorio
+
+  console.log(`ADK_WORKSPACE set to: ${casePath}`);
+
   try {
     const command = Command.create('python', [
       '-m', 'brazilian_legal_pipeline.session_cli',
@@ -437,7 +459,8 @@ export const startAndRunCaseSession = async (
       '--case-id', caseId,
       '--consultation', JSON.stringify(consultation)
     ], {
-      cwd: 'adk-agents'
+      cwd: 'adk-agents',
+      env: envVars
     });
 
     let sessionId: string | undefined;

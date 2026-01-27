@@ -45,8 +45,8 @@ const ResizeHandle: React.FC<ResizeHandleProps> = ({ direction, onResize, classN
   }, [isDragging, startPos, direction, onResize]);
 
   const baseClasses = direction === 'horizontal'
-    ? 'w-1 cursor-col-resize hover:bg-accent/30 active:bg-accent/50'
-    : 'h-1 cursor-row-resize hover:bg-accent/30 active:bg-accent/50';
+    ? 'w-2 cursor-col-resize hover:bg-accent/30 active:bg-accent/50'
+    : 'h-2 cursor-row-resize hover:bg-accent/30 active:bg-accent/50';
 
   return (
     <div

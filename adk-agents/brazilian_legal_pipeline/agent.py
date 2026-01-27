@@ -73,7 +73,8 @@ from .prompts import (
     CRITICO_INSTRUCTION,
     SYNTHESIZER_INSTRUCTION,
 )
-from .tools import filesystem_tools
+from .tools import filesystem_tools, shell_tools
+from .knowledge_base import legal_rag_tools
 from .loop_controller import LoopController, LoopState, set_controller
 
 
@@ -293,8 +294,8 @@ class BrazilianLegalPipeline:
 
     async def _initialize_agent(self, instruction: str, name: str) -> None:
         """Initialize or reconfigure the ADK agent with new instruction."""
-        # Combina google_search com filesystem tools
-        all_tools = [google_search] + filesystem_tools
+        # Combina google_search com filesystem, shell e RAG tools
+        all_tools = [google_search] + filesystem_tools + shell_tools + legal_rag_tools
 
         self._agent = Agent(
             name=name,

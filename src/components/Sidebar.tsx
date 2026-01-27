@@ -36,17 +36,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   const selectedAgent = AVAILABLE_AGENTS.find(a => a.id === selectedAgentId);
 
   // Fecha dropdowns ao clicar fora
+  // Usar click em vez de mousedown para permitir que o click no item seja processado primeiro
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (caseDropdownRef.current && !caseDropdownRef.current.contains(event.target as Node)) {
-        setIsCaseDropdownOpen(false);
-      }
-      if (agentDropdownRef.current && !agentDropdownRef.current.contains(event.target as Node)) {
-        setIsAgentDropdownOpen(false);
-      }
+      // setTimeout garante que o click no item seja processado antes de fechar
+      setTimeout(() => {
+        if (caseDropdownRef.current && !caseDropdownRef.current.contains(event.target as Node)) {
+          setIsCaseDropdownOpen(false);
+        }
+        if (agentDropdownRef.current && !agentDropdownRef.current.contains(event.target as Node)) {
+          setIsAgentDropdownOpen(false);
+        }
+      }, 0);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   const getCaseStatusColor = (status: CaseStatus) => {
