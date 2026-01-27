@@ -33,7 +33,9 @@ async def _ensure_knowledge_base_ready() -> LegalVectorStore:
 
     async with _initialization_lock:
         if _vector_store is None:
-            chroma_dir = Path(os.environ.get("CHROMA_DIR", "./data/chroma_db"))
+            home = Path.home()
+            default_chroma = home / ".claude" / "legal-knowledge-base" / "chroma_db"
+            chroma_dir = Path(os.environ.get("CHROMA_DIR", str(default_chroma)))
             _vector_store = LegalVectorStore(persist_dir=chroma_dir)
 
         # Verificar se base esta vazia
@@ -52,7 +54,9 @@ async def _auto_initialize_knowledge_base() -> None:
     """Baixa e indexa corpus juridico automaticamente."""
     from .downloader import download_constituicao_abjur, download_codigos_principais
 
-    corpus_dir = Path(os.environ.get("LEGAL_CORPUS_DIR", "./data/legal_corpus"))
+    home = Path.home()
+    default_corpus = home / ".claude" / "legal-knowledge-base" / "corpus"
+    corpus_dir = Path(os.environ.get("LEGAL_CORPUS_DIR", str(default_corpus)))
     corpus_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -92,7 +96,9 @@ def _get_vector_store() -> LegalVectorStore:
     global _vector_store
 
     if _vector_store is None:
-        chroma_dir = os.environ.get("CHROMA_DIR", "./data/chroma_db")
+        home = Path.home()
+        default_chroma = home / ".claude" / "legal-knowledge-base" / "chroma_db"
+        chroma_dir = os.environ.get("CHROMA_DIR", str(default_chroma))
         _vector_store = LegalVectorStore(persist_dir=Path(chroma_dir))
 
     return _vector_store

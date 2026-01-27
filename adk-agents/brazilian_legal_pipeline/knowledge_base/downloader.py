@@ -18,8 +18,9 @@ from typing import List, Dict, Any, Optional, Generator, Union
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
-# Diretorio base para dados
-DATA_DIR = Path(os.environ.get("LEGAL_DATA_DIR", "./data/legal_corpus"))
+# Diretorio base para dados (fora do repo, persistente)
+_HOME = Path.home()
+DATA_DIR = Path(os.environ.get("LEGAL_DATA_DIR", str(_HOME / ".claude" / "legal-knowledge-base" / "corpus")))
 
 
 @dataclass

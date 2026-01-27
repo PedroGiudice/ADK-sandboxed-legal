@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
-# Diretorio base para persistencia
-CHROMA_DIR = Path(os.environ.get("CHROMA_DIR", "./data/chroma_db"))
+# Diretorio base para persistencia (fora do repo, persistente)
+_HOME = Path.home()
+CHROMA_DIR = Path(os.environ.get("CHROMA_DIR", str(_HOME / ".claude" / "legal-knowledge-base" / "chroma_db")))
 
 
 @dataclass
