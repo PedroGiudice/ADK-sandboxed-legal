@@ -48,7 +48,7 @@ class LegalDocument:
 # ============================================================================
 
 def download_legalpt_dedup(
-    subset: str = "ulysses-tesemo",
+    subset: str = "tesemo_v2",
     max_samples: Optional[int] = None,
     output_dir: Optional[Path] = None
 ) -> Generator[LegalDocument, None, None]:
@@ -56,19 +56,26 @@ def download_legalpt_dedup(
     Baixa e processa o dataset LegalPT_dedup do HuggingFace.
 
     Args:
-        subset: Nome do subset (ulysses-tesemo, acordaos-tcu, etc.)
+        subset: Nome do subset
         max_samples: Limite de documentos (None = todos)
         output_dir: Diretorio para cache
 
     Yields:
         LegalDocument para cada documento processado
 
-    Subsets disponiveis:
-        - all: Todos os dados
-        - ulysses-tesemo: Documentos legislativos (1.74M)
-        - acordaos-tcu: Acordaos do TCU (462K)
-        - multilegal-pile-pt: MultiLegalPile portugues (6.26M)
-        - brcad-5: Decisoes TRF5 (543K)
+    Subsets disponiveis (verificado 2026-01):
+        - all: Todos os dados (11.9M)
+        - tesemo_v2: Documentos legislativos (1.74M)
+        - acordaos_tcu: Acordaos do TCU (462K)
+        - datastf: Dados do STF
+        - iudicium_textum: Jurisprudencia
+        - mlp_pt_BRCAD-5: Decisoes TRF5
+        - mlp_pt_CJPG: CJPG
+        - mlp_pt_eurlex-caselaw: Jurisprudencia europeia PT
+        - mlp_pt_eurlex-contracts: Contratos europeus PT
+        - mlp_pt_eurlex-legislation: Legislacao europeia PT
+        - mlp_pt_legal-mc4: Legal MC4
+        - parlamento-pt: Parlamento portugues
     """
     try:
         from datasets import load_dataset
