@@ -103,7 +103,17 @@ def download_legalpt_dedup(
         # Extrair campos relevantes
         text = item.get("text", "")
         source = item.get("source", subset)
-        doc_id = item.get("id", f"{subset}_{count}")
+        raw_id = item.get("id", count)
+        doc_id = f"{subset}_{raw_id}"  # Garantir que ID e string unica
+
+        # Truncar textos muito grandes (ChromaDB tem limite de embedding)
+        MAX_TEXT_LEN = 32000  # ~8k tokens
+        if len(text) > MAX_TEXT_LEN:
+            text = text[:MAX_TEXT_LEN] + "\n\n[TEXTO TRUNCADO - DOCUMENTO ORIGINAL MAIOR]"
+
+        # Pular documentos muito curtos
+        if len(text) < 100:
+            continue
 
         # Detectar tipo de documento pelo conteudo
         tipo = _detect_document_type(text)

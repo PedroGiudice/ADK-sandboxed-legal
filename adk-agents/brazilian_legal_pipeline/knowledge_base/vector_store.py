@@ -153,12 +153,17 @@ class LegalVectorStore:
 
                 ids.append(doc_id)
                 texts.append(texto)
-                metadatas.append({
-                    "tipo": doc.get("tipo", "desconhecido"),
-                    "titulo": doc.get("titulo", "")[:500],
-                    "fonte": doc.get("fonte", ""),
-                    "url": doc.get("url", ""),
-                })
+
+                # Montar metadados filtrando valores None (ChromaDB nao aceita)
+                meta = {
+                    "tipo": doc.get("tipo") or "desconhecido",
+                    "titulo": (doc.get("titulo") or "")[:500],
+                    "fonte": doc.get("fonte") or "",
+                    "url": doc.get("url") or "",
+                }
+                # Remover chaves com valores vazios ou None
+                meta = {k: v for k, v in meta.items() if v}
+                metadatas.append(meta)
 
             if ids:
                 self._collection.add(
